@@ -1,0 +1,32 @@
+# +--------------------------------------------------+
+# | .htaccess para entorno local o producción        |
+# | Colócalo en la carpeta raíz de /medtuciot        |
+# +--------------------------------------------------+
+
+# 1) Activa mod_rewrite
+RewriteEngine On
+
+# 2) Base de las URLs — tu subcarpeta en XAMPP
+RewriteBase /medtuciot/
+
+# 3) Redirige la raíz (/) a /login
+RewriteRule ^$ login [L,R=302]
+
+# 4) Rutas amigables → apuntan a tus scripts en /app/
+RewriteRule ^login/?$      app/login.php     [L,QSA]
+RewriteRule ^register/?$   app/register.php  [L,QSA]
+RewriteRule ^dashboard/?$  app/dashboard.php [L,QSA]
+RewriteRule ^logout/?$     app/logout.php    [L,QSA]
+
+# 5) Redirecciones 301 de viejas .html (si tenías .html antiguas)
+RedirectMatch 301 ^/medtuciot/login\.html$    /medtuciot/login
+RedirectMatch 301 ^/medtuciot/register\.html$ /medtuciot/register
+
+# 6) Bloquear accesos directos vía navegador a /app/*.php 
+#    (excepto logout.php para que siga funcionando)
+RewriteCond %{THE_REQUEST} \s/app/.*\.php [NC]
+RewriteCond %{THE_REQUEST} \s/app/(?!logout\.php).*\.php [NC]
+RewriteRule ^app/.*\.php$ - [F]
+
+# 7) Deshabilitar listado de directorios
+Options -Indexes

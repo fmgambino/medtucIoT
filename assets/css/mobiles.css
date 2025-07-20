@@ -1,0 +1,95 @@
+/* mobiles.css */
+
+/* SOLO MÓVIL hasta 768px */
+@media (max-width: 768px) {
+  /* Layout vertical */
+  #wrapper { flex-direction: column !important; height: auto !important; }
+
+  /* Topbar rediseño */
+  .topbar {
+    justify-content: space-between !important;
+    padding: 0.5rem !important;
+  }
+  /* Logo reducido y centrado */
+  .topbar-left {
+    flex: 1 !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+  }
+  .topbar-left .logo {
+    height: 30px !important;
+    width: auto !important;
+    margin: 0 auto !important;
+  }
+  /* Selects visibles junto al logo */
+  #placeSelect,
+  #deviceSelect {
+    display: inline-block !important;
+    margin: 0 0.5rem !important;
+    font-size: 0.9rem !important;
+    padding: 0.4rem !important;
+  }
+  /* Ocultar icon-btn en topbar-right excepto perfil y hamburguesa */
+  .topbar-right .icon-btn { display: none !important; }
+  .topbar-right .profile-img { display: inline-block !important; }
+  .topbar-right .hamburger { display: flex !important; }
+  
+  /* Botón hamburguesa */
+  .hamburger {
+    flex-direction: column !important;
+    justify-content: space-around !important;
+    width: 28px !important;
+    height: 28px !important;
+  }
+  .hamburger span { background: #333 !important; }
+
+  /* Ocultar sidebar normal */
+  .sidebar { display: none !important; }
+
+  /* Menú deslizable */
+  .mobile-drawer {
+    position: fixed !important;
+    top: 0 !important;
+    left: -250px !important;
+    width: 250px !important;
+    height: 100% !important;
+    background: #2A3F54 !important;
+    color: #ECF0F1 !important;
+    transition: left 0.3s ease !important;
+    z-index: 1000 !important;
+    padding-top: 60px !important;
+  }
+  .mobile-drawer.open { left: 0 !important; }
+
+  /* Iconos dentro del drawer */
+  .mobile-drawer .icon-btn {
+    display: block !important;
+    margin: 1rem !important;
+    font-size: 1.5rem !important;
+    color: #ECF0F1 !important;
+  }
+  .mobile-drawer .mobile-drawer-header {
+    text-align: center !important;
+    margin-bottom: 1rem !important;
+  }
+
+  /* Main content corrido */
+  .main-content { margin-top: 60px !important; margin-left: 0 !important; }
+
+  /* Footer siempre visible */
+  .footer {
+    left: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    position: fixed !important;
+    z-index: 100 !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .topbar-left .logo {
+    cursor: pointer !important;
+  }
+}
+
