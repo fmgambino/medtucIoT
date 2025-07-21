@@ -1,0 +1,169 @@
+/* addSensor.css */
+
+/* “Añadir Sensor” widget - Light mode */
+.widget.add-sensor {
+  background: #fff !important;
+  color: #00e676 !important;
+  border: 1px dashed #00e676 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: background 0.2s ease !important;
+}
+
+.widget.add-sensor h2 {
+  margin: 0 !important;
+  font-size: 1.1rem !important;
+}
+
+.widget.add-sensor:hover {
+  background: #f5f5f5 !important;
+}
+
+/* “Añadir Sensor” widget - Dark mode */
+body.dark .widget.add-sensor {
+  background: #2a2a2a !important;
+  color: #00e676 !important;
+  border: 1px dashed #00e676 !important;
+}
+
+body.dark .widget.add-sensor:hover {
+  background: #333 !important;
+}
+
+/* Modal backdrop */
+#sensorModal.modal {
+  display: none !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background: rgba(0, 0, 0, 0.75) !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 1000 !important;
+}
+
+#sensorModal.modal.active {
+  display: flex !important;
+}
+
+/* Modal content - Light mode */
+#sensorModal .modal-content {
+  background: #fff !important;
+  color: #000 !important;
+  padding: 1.5rem !important;
+  border-radius: 8px !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  width: 90% !important;
+  max-width: 360px !important;
+  position: relative !important;
+}
+
+/* Modal content - Dark mode */
+body.dark #sensorModal .modal-content {
+  background: #2a2a2a !important;
+  color: #eee !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Close button */
+#sensorModal .modal-content .close {
+  position: absolute !important;
+  top: 0.5rem !important;
+  right: 0.75rem !important;
+  font-size: 1.4rem !important;
+  color: #888 !important;
+  cursor: pointer !important;
+  transition: color 0.2s !important;
+}
+
+#sensorModal .modal-content .close:hover {
+  color: #00e676 !important;
+}
+
+/* Form labels */
+#sensorForm label {
+  display: block !important;
+  margin-top: 1rem !important;
+  font-weight: 600 !important;
+  font-size: 0.9rem !important;
+}
+
+/* Inputs & selects - Light mode */
+#sensorForm input,
+#sensorForm select {
+  width: 100% !important;
+  padding: 0.5rem !important;
+  margin-top: 0.25rem !important;
+  background: #f5f5f5 !important;
+  color: #000 !important;
+  border: 1px solid #ccc !important;
+  border-radius: 4px !important;
+  font-size: 0.9rem !important;
+}
+
+/* Inputs & selects - Dark mode */
+body.dark #sensorForm input,
+body.dark #sensorForm select {
+  background: #3a3a3a !important;
+  color: #eee !important;
+  border: 1px solid #555 !important;
+}
+
+/* Guardar button - Light mode */
+#saveSensorBtn {
+  display: block !important;
+  width: 100% !important;
+  padding: 0.75rem !important;
+  margin-top: 1.25rem !important;
+  background: #00e676 !important;
+  color: #000 !important;
+  border: none !important;
+  border-radius: 4px !important;
+  font-weight: 700 !important;
+  font-size: 1rem !important;
+  cursor: pointer !important;
+  transition: opacity 0.2s !important;
+}
+
+#saveSensorBtn:hover {
+  opacity: 0.85 !important;
+}
+
+/* Guardar button - Dark mode */
+body.dark #saveSensorBtn {
+  background: #28a745 !important;
+  color: #fff !important;
+}
+
+/* Posicionar los iconos de edición y eliminación en la esquina inferior derecha */
+.widget {
+  position: relative !important;
+}
+
+.widget .widget-actions {
+  position: absolute !important;
+  bottom: 0.5rem !important;
+  right: 0.5rem !important;
+  display: flex !important;
+  gap: 0.5rem !important;
+}
+
+.widget .widget-actions i {
+  font-size: 1.2rem !important;
+  color: inherit !important;
+  cursor: pointer !important;
+  transition: color 0.2s !important;
+}
+
+.widget .widget-actions i:hover {
+  color: #00e676 !important; /* mismo verde de “Añadir Sensor” */
+}
+
+/* En modo oscuro, aseguramos contraste */
+body.dark .widget .widget-actions i:hover {
+  color: #00ff88 !important;
+}

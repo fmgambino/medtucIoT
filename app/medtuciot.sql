@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 20, 2025 at 02:16 AM
+-- Generation Time: Jul 21, 2025 at 05:47 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.0.30
 
@@ -47,6 +47,13 @@ CREATE TABLE `devices` (
   `esp32_id` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- Dumping data for table `devices`
+--
+
+INSERT INTO `devices` (`id`, `place_id`, `name`, `esp32_id`) VALUES
+(101, 1, 'ESP32-Casa-1', 'ESP32-Casa-1');
+
 -- --------------------------------------------------------
 
 --
@@ -57,6 +64,13 @@ CREATE TABLE `places` (
   `id` int(11) NOT NULL,
   `name` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `places`
+--
+
+INSERT INTO `places` (`id`, `name`) VALUES
+(1, 'Casa');
 
 -- --------------------------------------------------------
 
@@ -71,6 +85,37 @@ CREATE TABLE `reset_logs` (
   `reason` text NOT NULL,
   `timestamp` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sensors`
+--
+
+CREATE TABLE `sensors` (
+  `id` int(11) NOT NULL,
+  `device_id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `port` varchar(50) NOT NULL,
+  `variable` varchar(50) NOT NULL,
+  `icon` varchar(10) NOT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `sensors`
+--
+
+INSERT INTO `sensors` (`id`, `device_id`, `name`, `port`, `variable`, `icon`, `created_at`) VALUES
+(17, 101, 'DHT22', 'GPIO4', 'tempHum', '🌡️', '2025-07-21 03:16:12'),
+(18, 101, 'MQ1325', 'GPIO5', 'co2', '🏭', '2025-07-21 03:16:12'),
+(19, 101, 'Hum Suelo', 'GPIO14', 'soilHum', '💧', '2025-07-21 03:16:12'),
+(20, 101, 'pH', 'GPIO32', 'ph', '🧪', '2025-07-21 03:16:12'),
+(21, 101, 'EC', 'GPIO33', 'ec', '⚡', '2025-07-21 03:16:12'),
+(22, 101, 'Nivel H2O', 'GPIO35', 'h2o', '💧', '2025-07-21 03:16:12'),
+(23, 101, 'Nafta', 'GPIO34', 'nafta', '⛽', '2025-07-21 03:16:12'),
+(24, 101, 'Aceite', 'GPIO36', 'aceite', '🛢️', '2025-07-21 03:16:12'),
+(33, 101, 'LDR P. Solar', 'GPIO15', 'sLDR', '💡', '2025-07-21 03:36:23');
 
 -- --------------------------------------------------------
 
@@ -149,6 +194,13 @@ ALTER TABLE `reset_logs`
   ADD KEY `user_id` (`user_id`);
 
 --
+-- Indexes for table `sensors`
+--
+ALTER TABLE `sensors`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `device_id` (`device_id`);
+
+--
 -- Indexes for table `sensor_data`
 --
 ALTER TABLE `sensor_data`
@@ -177,13 +229,13 @@ ALTER TABLE `actuators`
 -- AUTO_INCREMENT for table `devices`
 --
 ALTER TABLE `devices`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=102;
 
 --
 -- AUTO_INCREMENT for table `places`
 --
 ALTER TABLE `places`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `reset_logs`
@@ -192,10 +244,16 @@ ALTER TABLE `reset_logs`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT for table `sensors`
+--
+ALTER TABLE `sensors`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
+
+--
 -- AUTO_INCREMENT for table `sensor_data`
 --
 ALTER TABLE `sensor_data`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=19;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -225,6 +283,12 @@ ALTER TABLE `devices`
 ALTER TABLE `reset_logs`
   ADD CONSTRAINT `reset_logs_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `reset_logs_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL;
+
+--
+-- Constraints for table `sensors`
+--
+ALTER TABLE `sensors`
+  ADD CONSTRAINT `sensors_ibfk_1` FOREIGN KEY (`device_id`) REFERENCES `devices` (`id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `sensor_data`

@@ -7,7 +7,7 @@
 $hostName = $_SERVER['HTTP_HOST'] ?? '';
 if (strpos($hostName, 'localhost') !== false || strpos($hostName, '127.0.0.1') !== false) {
     // Entorno local (XAMPP)
-    define('BASE_PATH', '/medtuciot');
+    define('BASE_PATH', '/medtucIoT');
 } else {
     // Producción (Hostinger)
     define('BASE_PATH', '');

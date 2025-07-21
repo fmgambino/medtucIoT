@@ -95,35 +95,27 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Simulación sensores ---
-function updateSensors() {
-  const data = {
-    tempVal:       rand(15, 35),
-    humVal:        rand(20, 80),
-    co2Val:        Math.round(rand(300, 2000, 0)),
-    methaneVal:    Math.round(rand(0, 200, 0)),
-    butaneVal:     Math.round(rand(0, 200, 0)),
-    propaneVal:    Math.round(rand(0, 200, 0)),
-    soilHumVal:    rand(10, 90),
-    phVal:         rand(4.0, 9.0, 2),
-    ecVal:         Math.round(rand(200, 2000, 0)),
-    whiteWaterVal: Math.round(rand(0, 100, 0)),
-    greyWaterVal:  Math.round(rand(0, 100, 0)),
-    blackWaterVal: Math.round(rand(0, 100, 0)),
-    batteryVal:    Math.round(rand(0, 100, 0)),
-    h2oVal:        Math.round(rand(0, 100, 0)),  // Nivel de H₂O %
-    naftaVal:      Math.round(rand(0, 100, 0)),  // Nafta %
-    aceiteVal:     Math.round(rand(0, 100, 0))   // Aceite %
-  };
-
-  Object.entries(data).forEach(([id, val]) => {
-    const el = document.getElementById(id);
-    if (el) el.textContent = val;
-  });
+async function updateSensors() {
+  try {
+    const res = await fetch(
+      `${BASE_PATH}/app/get_latest.php?deviceId=${currentDeviceId}`
+    );
+    if (!res.ok) throw '';
+    const list = await res.json();
+    list.forEach(s => {
+      let id = s.sensor_type==='tempHum' ? 'tempVal' : s.sensor_type+'Val';
+      // para hum de tempHum:
+      if (s.sensor_type==='tempHum' && s.unit==='%') id = 'humVal';
+      const el = document.getElementById(id);
+      if (el) el.textContent = s.value;
+    });
+  } catch {
+    console.warn('No hay datos reales todavía');
+  }
 }
 
 updateSensors();
 setInterval(updateSensors, 5000);
-
 
   // --- Historial de reinicios ---
   let rebootHistory = JSON.parse(localStorage.getItem('rebootHistory') || 'null');

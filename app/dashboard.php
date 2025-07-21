@@ -15,6 +15,42 @@ $devices_by_place = [
     3=>[['id'=>301,'name'=>'ESP32-Campo1-1'],['id'=>302,'name'=>'ESP32-Campo1-2'],['id'=>303,'name'=>'ESP32-Campo1-3']],
 ];
 
+// — Determinar place y device seleccionados (GET o por defecto) —
+$currentPlaceId  = isset($_GET['place'])  ? intval($_GET['place'])  : $places[0]['id'];
+$currentDeviceId = isset($_GET['device']) ? intval($_GET['device']) : $devices_by_place[$currentPlaceId][0]['id'];
+
+$unitMap = [
+    'tempHum' => [
+        ['label' => 'Temp', 'unit' => '°C',    'spanId' => 'tempVal'],
+        ['label' => 'Hum',  'unit' => '%',     'spanId' => 'humVal'],
+    ],
+    'co2'     => [
+        ['label' => 'CO₂',  'unit' => 'ppm',   'spanId' => 'co2Val'],
+    ],
+    'soilHum' => [
+        ['label' => '',     'unit' => '%',     'spanId' => 'soilHumVal'],
+    ],
+    'ph'      => [
+        ['label' => '',     'unit' => '',      'spanId' => 'phVal'],
+    ],
+    'ec'      => [
+        ['label' => '',     'unit' => 'μS/cm', 'spanId' => 'ecVal'],
+    ],
+    'h2o'     => [
+        ['label' => '',     'unit' => '%',     'spanId' => 'h2oVal'],
+    ],
+    'nafta'   => [
+        ['label' => '',     'unit' => '%',     'spanId' => 'naftaVal'],
+    ],
+    'aceite'  => [
+        ['label' => '',     'unit' => '%',     'spanId' => 'aceiteVal'],
+    ],
+];
+
+// — Traer sensores desde la tabla sensors para este dispositivo —
+$stmt = $pdo->prepare('SELECT * FROM sensors WHERE device_id = ?');
+$stmt->execute([$currentDeviceId]);
+$sensors = $stmt->fetchAll();  // array de sensores
 // Actuadores simulados
 $actuators = [
     [
@@ -86,6 +122,7 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
   <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
   <!-- Estilos -->
   <link rel="stylesheet" href="<?= BASE_PATH ?>/assets/css/styles.css">
+  <link rel="stylesheet" href="<?= BASE_PATH ?>/assets/css/addSensor.css">
   <link rel="stylesheet" href="<?= BASE_PATH ?>/assets/css/mobiles.css">
 
   <!-- SweetAlert2 -->
@@ -190,45 +227,82 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
           <i id="doReboot" class="ri-restart-line icon-btn" title="Reset remoto"></i>
           <span id="lastReset" class="last-reset">Último reset: —</span>
         </div>
-        <div class="sensor-grid">
-  <div class="widget">
-   <h2>🌡️ DHT22 <i class="ri-line-chart-fill chart-icon" data-sensor="DHT22" title="Ver gráfico DHT22"></i></h2>
-    <p>Temp: <span id="tempVal">—</span> °C</p>
-    <p>Hum:  <span id="humVal">—</span> %</p>
+ 
+<!-- SENSOR GRID + “Añadir Sensor” -->
+<div class="sensor-grid">
+  <!-- Añadir Sensor -->
+  <div class="widget add-sensor" id="addSensorBtn">
+    <h2><i class="ri-add-line"></i> Añadir Sensor</h2>
   </div>
-  <div class="widget">
-   <h2>🏭 MQ1325 <i class="ri-line-chart-fill chart-icon" data-sensor="MQ1325" title="Ver gráfico MQ1325"></i></h2>
-    <p>CO₂:    <span id="co2Val">—</span> ppm</p>
-    <!-- ... -->
-  </div>
-  <div class="widget">
-    <h2>💧Hum. Suelo <i class="ri-line-chart-fill chart-icon" data-sensor="Hum Suelo" title="Ver gráfico Hum. Suelo"></i></h2>
-    <p><span id="soilHumVal">—</span> %</p>
-  </div>
-  <div class="widget">
-   <h2>🧪 pH <i class="ri-line-chart-fill chart-icon" data-sensor="pH" title="Ver gráfico pH"></i></h2>
-    <p><span id="phVal">—</span></p>
-  </div>
-  <div class="widget">
-   <h2>⚡ EC <i class="ri-line-chart-fill chart-icon" data-sensor="EC" title="Ver gráfico EC"></i></h2>
-    <p><span id="ecVal">—</span> μS/cm</p>
-  </div>
-  <!-- NUESTROS NUEVOS WIDGETS -->
 
-<div class="widget">
-  <h2>💧Nivel H₂O <i class="ri-line-chart-fill chart-icon" data-sensor="Nivel H2O" title="Ver gráfico Nivel H2O"></i></h2>
-  <p><span id="h2oVal">—</span> %</p>
+  <?php foreach ($sensors as $sensor): 
+    $name     = $sensor['name'];
+    $icon     = $sensor['icon'];
+    $variable = $sensor['variable'];
+    $lines    = $unitMap[$variable] ?? [];
+    $id       = (int)$sensor['id'];
+  ?>
+    <div class="widget" data-sensor="<?= htmlspecialchars($name) ?>">
+      <h2>
+        <?= htmlspecialchars($icon) ?> <?= htmlspecialchars($name) ?>
+        <i class="ri-line-chart-fill chart-icon"
+           data-sensor="<?= htmlspecialchars($name) ?>"
+           title="Ver gráfico <?= htmlspecialchars($name) ?>"></i>
+      </h2>
+
+      <?php foreach ($lines as $line): ?>
+        <p>
+          <?= $line['label'] !== '' ? htmlspecialchars($line['label']) . ': ' : '' ?>
+          <span id="<?= htmlspecialchars($line['spanId']) ?>">—</span>
+          <?= htmlspecialchars($line['unit']) ?>
+        </p>
+      <?php endforeach; ?>
+
+      <div class="widget-actions">
+        <i class="ri-pencil-line edit-icon"
+           data-id="<?= $id ?>"
+           title="Editar sensor"></i>
+        <i class="ri-delete-bin-line delete-icon"
+           data-id="<?= $id ?>"
+           title="Eliminar sensor"></i>
+      </div>
+    </div>
+  <?php endforeach; ?>
 </div>
 
-<div class="widget">
-  <h2>⛽ Nafta <i class="ri-line-chart-fill chart-icon" data-sensor="Nafta" title="Ver gráfico Nafta"></i></h2>
-  <p><span id="naftaVal">—</span> %</p>
-</div>
+<!-- MODAL Añadir/Editar Sensor -->
+<div id="sensorModal" class="modal">
+  <div class="modal-content">
+    <span class="close">&times;</span>
+    <h2 id="modalTitle">Añadir Sensor</h2>
+    <form id="sensorForm">
+      <input type="hidden" id="deviceId" name="deviceId" value="<?= (int)$currentDeviceId ?>">
+      <input type="hidden" id="sensorId" name="sensorId" value="">
 
-<div class="widget">
-  <h2>🛢️ Aceite <i class="ri-line-chart-fill chart-icon" data-sensor="Aceite" title="Ver gráfico Aceite"></i></h2>
-  <p><span id="aceiteVal">—</span> %</p>
-</div>
+      <label for="sensorName">Nombre:</label>
+      <input type="text" id="sensorName" name="sensorName" required>
+
+      <label for="sensorPort">Puerto:</label>
+      <input type="text" id="sensorPort" name="sensorPort" required>
+
+      <label for="sensorVar">Variable ESP32:</label>
+      <input type="text" id="sensorVar" name="sensorVar" required>
+
+      <label for="sensorIcon">Icono:</label>
+      <select id="sensorIcon" name="sensorIcon">
+        <option value="🌡️">Temperatura</option>
+        <option value="💧">Humedad</option>
+        <option value="🧪">pH</option>
+        <option value="⛽">Gases</option>
+        <option value="🌬️">Viento</option>
+        <option value="📏">Distancia</option>
+        <option value="💡">Luz</option>
+        <option value="💧">Nivel</option>
+      </select>
+
+      <button type="submit" id="saveSensorBtn">Guardar</button>
+    </form>
+  </div>
 </div>
 
 
@@ -289,10 +363,22 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
     </div>
   </div>
 
-  <!-- Scripts -->
-  <script defer src="<?= BASE_PATH ?>/assets/js/main.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SCRIPTS -->
+<script>
+  window.BASE_PATH = '<?= BASE_PATH ?>';
+</script>
+<script>
+  window.BASE_PATH = '/medtucIoT';  // ¡ojo con mayúsculas/minúsculas!
+</script>
+<script>
+  const currentDeviceId = <?= (int)$currentDeviceId ?>;
+  const BASE_PATH = '<?= BASE_PATH ?>';
+</script>
+<script defer src="<?= BASE_PATH ?>/assets/js/main.js"></script>
+<script defer src="<?= BASE_PATH ?>/assets/js/addSensor.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@^2.0.0"></script>
+
 
   <script>
     function onPlaceChange() {
