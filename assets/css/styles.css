@@ -351,39 +351,81 @@ h2 {
 /* Sensor grid */
 .sensor-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   margin-bottom: 2rem;
 }
+
 .widget {
   background: #FFF;
   padding: 1rem;
   border-radius: 4px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
+
 .widget h2 {
   margin-bottom: 0.5rem;
 }
 
-/* Actuators */
-.actuators {
-  margin-bottom: 2rem;
+
+/* Contenedor de actuadores: reutiliza sensor-grid pero con min-width más grande */
+.actuators .sensor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  width: 100%;
+  margin-top: 1rem;  /* separa del título */
 }
-.toggle-row {
+
+/* H2 “Actuadores” ocupa todo el ancho (fuera del grid interno) */
+.actuators > h2 {
+  margin: 0;
+  font-size: 1.7rem;
+  color: #1ABB9C;
+}
+
+/* Cada tarjeta de actuador */
+.widget.actuator-card {
   display: flex;
-  align-items: center;
-  margin: 0.5rem 0;
+  flex-direction: column;
+  justify-content: space-between;
+  background: #FFF;
+  padding: 1.25rem;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  width: 100%;
+  min-height: 100px;
 }
-.toggle-row .icon {
-  margin-right: 0.5rem;
+
+/* Asegura que la cabecera ocupe todo el ancho */
+.actuator-header {
+  width: 100%;
+}
+
+/* Centra el switch dentro de la tarjeta */
+.widget.actuator-card .switch {
+  /* elimina cualquier align-self previo */
+  align-self: center;
+  
+  /* si quieres además usar margen automático: */
+  margin: 0 auto;
+}
+
+/* Iconos de edición/info */
+.actuator-header .ri-pencil-line,
+.actuator-header .ri-information-line {
   font-size: 1.2rem;
+  margin-left: 0.5rem;
+  cursor: pointer;
 }
+
+/* Switch: al final de la tarjeta */
 .switch {
+  align-self: flex-end;
   position: relative;
   display: inline-block;
-  width: 40px;
-  height: 20px;
-  margin-left: auto;
+  width: 60px;
+  height: 30px;
 }
 .switch input {
   opacity: 0;
@@ -392,21 +434,16 @@ h2 {
 }
 .switch .slider {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  top: 0; left: 0; right: 0; bottom: 0;
   background: #ccc;
-  border-radius: 20px;
+  border-radius: 30px;
   transition: 0.4s;
 }
 .switch .slider:before {
   content: "";
   position: absolute;
-  height: 16px;
-  width: 16px;
-  left: 2px;
-  bottom: 2px;
+  height: 26px; width: 26px;
+  left: 2px; bottom: 2px;
   background: #fff;
   border-radius: 50%;
   transition: 0.4s;
@@ -415,8 +452,9 @@ h2 {
   background: #1ABB9C;
 }
 .switch input:checked + .slider:before {
-  transform: translateX(20px);
+  transform: translateX(30px);
 }
+
 
 /* Dark mode */
 body.dark {
@@ -488,15 +526,33 @@ body.dark .widget {
 /* —————————————————————————————————————————————— */
 /* Modales (SweetAlert2 y custom)              */
 /* —————————————————————————————————————————————— */
-.swal2-popup { … }
-.swal2-title { … }
-.swal2-html-container ul { … }
+.swal2-popup {
+  background: #fff;
+  padding: 2em;
+  border-radius: 0.25em;
+}
+
+.swal2-title {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 1rem;
+}
+
+.swal2-html-container ul {
+  list-style: none;
+  margin: 0 0 1rem 0;
+  padding: 0;
+}
+
 .swal2-html-container li {
   position: relative;
   padding-left: 2em;
   margin-bottom: 0.5em;
   font-size: 1rem;
+  /* puedes añadir un marcador personalizado: */
+  list-style: disc inside;
 }
+
 /* icono antes de cada li, según estado ON/OFF */
 .swal2-html-container li[data-state="ON"]::before {
   content: "✔️";

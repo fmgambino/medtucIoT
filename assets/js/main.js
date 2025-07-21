@@ -1,31 +1,33 @@
 // assets/js/main.js
 
 document.addEventListener('DOMContentLoaded', () => {
-  // --- Sidebar toggle ---
-  const logo        = document.getElementById('logo');
-  const sidebar     = document.getElementById('sidebar');
-  const mainContent = document.getElementById('main-content');
-  
-  logo.addEventListener('click', () => {
-  // si estamos en móvil (<=768px) abrimos el drawer
-  if (window.innerWidth <= 768) {
-    document.getElementById('mobileDrawer').classList.toggle('open');
-  } else {
-    // si no, el sidebar de siempre
-    sidebar.classList.toggle('collapsed');
-    mainContent.classList.toggle('expanded');
-  }
-});
-
-
-  // --- Mobile drawer toggle ---
+  // — Sidebar / Drawer references —
+  const logo         = document.getElementById('logo');
+  const sidebar      = document.getElementById('sidebar');
+  const mainContent  = document.getElementById('main-content');
   const hamburger    = document.getElementById('hamburger');
   const mobileDrawer = document.getElementById('mobileDrawer');
+
+  // — Sidebar vs Drawer toggle —
+  logo.addEventListener('click', () => {
+    if (window.innerWidth <= 768) {
+      // en móvil clic al logo abre/cierra el drawer
+      mobileDrawer.classList.toggle('open');
+    } else {
+      // en escritorio colapsa el sidebar
+      sidebar.classList.toggle('collapsed');
+      mainContent.classList.toggle('expanded');
+    }
+  });
+
+  // — Mobile drawer toggle con hamburguesa —
   if (hamburger && mobileDrawer) {
     hamburger.addEventListener('click', () => {
       mobileDrawer.classList.toggle('open');
     });
   }
+
+
 
   // --- Menu navigation ---
   document.querySelectorAll('.sidebar .menu li').forEach(item => {
@@ -93,29 +95,35 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Simulación sensores ---
-  function updateSensors() {
-    const data = {
-      tempVal:       rand(15, 35),
-      humVal:        rand(20, 80),
-      co2Val:        Math.round(rand(300, 2000, 0)),
-      methaneVal:    Math.round(rand(0, 200, 0)),
-      butaneVal:     Math.round(rand(0, 200, 0)),
-      propaneVal:    Math.round(rand(0, 200, 0)),
-      soilHumVal:    rand(10, 90),
-      phVal:         rand(4.0, 9.0, 2),
-      ecVal:         Math.round(rand(200, 2000, 0)),
-      whiteWaterVal: Math.round(rand(0, 100, 0)),
-      greyWaterVal:  Math.round(rand(0, 100, 0)),
-      blackWaterVal: Math.round(rand(0, 100, 0)),
-      batteryVal:    Math.round(rand(0, 100, 0))
-    };
-    Object.entries(data).forEach(([id, val]) => {
-      const el = document.getElementById(id);
-      if (el) el.textContent = val;
-    });
-  }
-  updateSensors();
-  setInterval(updateSensors, 5000);
+function updateSensors() {
+  const data = {
+    tempVal:       rand(15, 35),
+    humVal:        rand(20, 80),
+    co2Val:        Math.round(rand(300, 2000, 0)),
+    methaneVal:    Math.round(rand(0, 200, 0)),
+    butaneVal:     Math.round(rand(0, 200, 0)),
+    propaneVal:    Math.round(rand(0, 200, 0)),
+    soilHumVal:    rand(10, 90),
+    phVal:         rand(4.0, 9.0, 2),
+    ecVal:         Math.round(rand(200, 2000, 0)),
+    whiteWaterVal: Math.round(rand(0, 100, 0)),
+    greyWaterVal:  Math.round(rand(0, 100, 0)),
+    blackWaterVal: Math.round(rand(0, 100, 0)),
+    batteryVal:    Math.round(rand(0, 100, 0)),
+    h2oVal:        Math.round(rand(0, 100, 0)),  // Nivel de H₂O %
+    naftaVal:      Math.round(rand(0, 100, 0)),  // Nafta %
+    aceiteVal:     Math.round(rand(0, 100, 0))   // Aceite %
+  };
+
+  Object.entries(data).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  });
+}
+
+updateSensors();
+setInterval(updateSensors, 5000);
+
 
   // --- Historial de reinicios ---
   let rebootHistory = JSON.parse(localStorage.getItem('rebootHistory') || 'null');

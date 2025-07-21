@@ -192,27 +192,43 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
         </div>
         <div class="sensor-grid">
   <div class="widget">
-   <h2>🌡️ DHT22 <i class="ri-bar-chart-line chart-icon" data-sensor="DHT22" title="Ver gráfico DHT22"></i></h2>
+   <h2>🌡️ DHT22 <i class="ri-line-chart-fill chart-icon" data-sensor="DHT22" title="Ver gráfico DHT22"></i></h2>
     <p>Temp: <span id="tempVal">—</span> °C</p>
     <p>Hum:  <span id="humVal">—</span> %</p>
   </div>
   <div class="widget">
-   <h2>🏭 MQ1325 <i class="ri-bar-chart-line chart-icon" data-sensor="MQ1325" title="Ver gráfico MQ1325"></i></h2>
+   <h2>🏭 MQ1325 <i class="ri-line-chart-fill chart-icon" data-sensor="MQ1325" title="Ver gráfico MQ1325"></i></h2>
     <p>CO₂:    <span id="co2Val">—</span> ppm</p>
     <!-- ... -->
   </div>
   <div class="widget">
-    <h2>💧Hum. Suelo <i class="ri-bar-chart-line chart-icon" data-sensor="Hum Suelo" title="Ver gráfico Hum. Suelo"></i></h2>
+    <h2>💧Hum. Suelo <i class="ri-line-chart-fill chart-icon" data-sensor="Hum Suelo" title="Ver gráfico Hum. Suelo"></i></h2>
     <p><span id="soilHumVal">—</span> %</p>
   </div>
   <div class="widget">
-   <h2>🧪 pH <i class="ri-bar-chart-line chart-icon" data-sensor="pH" title="Ver gráfico pH"></i></h2>
+   <h2>🧪 pH <i class="ri-line-chart-fill chart-icon" data-sensor="pH" title="Ver gráfico pH"></i></h2>
     <p><span id="phVal">—</span></p>
   </div>
   <div class="widget">
-   <h2>⚡ EC <i class="ri-bar-chart-line chart-icon" data-sensor="EC" title="Ver gráfico EC"></i></h2>
+   <h2>⚡ EC <i class="ri-line-chart-fill chart-icon" data-sensor="EC" title="Ver gráfico EC"></i></h2>
     <p><span id="ecVal">—</span> μS/cm</p>
   </div>
+  <!-- NUESTROS NUEVOS WIDGETS -->
+
+<div class="widget">
+  <h2>💧Nivel H₂O <i class="ri-line-chart-fill chart-icon" data-sensor="Nivel H2O" title="Ver gráfico Nivel H2O"></i></h2>
+  <p><span id="h2oVal">—</span> %</p>
+</div>
+
+<div class="widget">
+  <h2>⛽ Nafta <i class="ri-line-chart-fill chart-icon" data-sensor="Nafta" title="Ver gráfico Nafta"></i></h2>
+  <p><span id="naftaVal">—</span> %</p>
+</div>
+
+<div class="widget">
+  <h2>🛢️ Aceite <i class="ri-line-chart-fill chart-icon" data-sensor="Aceite" title="Ver gráfico Aceite"></i></h2>
+  <p><span id="aceiteVal">—</span> %</p>
+</div>
 </div>
 
 
