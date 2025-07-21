@@ -1,18 +1,19 @@
 // assets/js/addSensor.js
 document.addEventListener('DOMContentLoaded', () => {
-  const addBtn    = document.getElementById('addSensorBtn');
-  const modal     = document.getElementById('sensorModal');
-  const closeBtn  = modal.querySelector('.close');
-  const form      = document.getElementById('sensorForm');
-  const titleEl   = document.getElementById('modalTitle');
-  const idInput   = document.getElementById('sensorId');
-  const nameInput = document.getElementById('sensorName');
-  const portInput = document.getElementById('sensorPort');
-  const varInput  = document.getElementById('sensorVar');
-  const iconInput = document.getElementById('sensorIcon');
-  const deviceId  = document.getElementById('deviceId').value;
+  const grid        = document.querySelector('.sensor-grid');
+  const addBtn      = document.getElementById('addSensorBtn');
+  const modal       = document.getElementById('sensorModal');
+  const closeBtn    = modal.querySelector('.close');
+  const form        = document.getElementById('sensorForm');
+  const titleEl     = document.getElementById('modalTitle');
+  const idInput     = document.getElementById('sensorId');
+  const typeInput   = document.getElementById('sensorType');
+  const nameInput   = document.getElementById('sensorName');
+  const portInput   = document.getElementById('sensorPort');
+  const varInput    = document.getElementById('sensorVar');
+  const iconInput   = document.getElementById('sensorIcon');
+  const deviceId    = document.getElementById('deviceId').value;
 
-  // Usamos sensor.php en lugar de sensores.php
   const baseUrl = `${BASE_PATH}/app/sensor.php`;
   const endpoints = {
     add:    `${baseUrl}?action=add`,
@@ -21,25 +22,37 @@ document.addEventListener('DOMContentLoaded', () => {
     delete: id => `${baseUrl}?action=delete&id=${encodeURIComponent(id)}`
   };
 
-  if (!addBtn || !modal || !closeBtn || !form ||
-      !titleEl || !idInput || !nameInput || !portInput || !varInput || !iconInput) {
-    console.error('addSensor.js: faltan elementos en el DOM');
-    return;
-  }
+  // Iconos por defecto
+  const defaultIcons = {
+    tempHum: '🌡️',
+    mq135:   '⛽',
+    soilHum: '🌱',
+    ph:      '🧪',
+    ec:      '⚡',
+    h2o:     '🌊',
+    nafta:   '⛽',
+    aceite:  '🛢️',
+    ldr:     '💡',
+    generic: '❓'
+  };
 
   function openModal(isEdit = false, sensor = {}) {
+    form.reset();
     if (isEdit) {
       titleEl.textContent = 'Editar Sensor';
       idInput.value       = sensor.id;
-      nameInput.value     = sensor.name     || '';
-      portInput.value     = sensor.port     || '';
-      varInput.value      = sensor.variable || '';
-      iconInput.value     = sensor.icon     || '';
+      typeInput.value     = sensor.sensor_type;
+      nameInput.value     = sensor.name;
+      portInput.value     = sensor.port;
+      varInput.value      = sensor.variable;
+      iconInput.value     = sensor.icon;
     } else {
       titleEl.textContent = 'Añadir Sensor';
-      form.reset();
-      idInput.value = '';
+      idInput.value       = '';
+      iconInput.value     = defaultIcons[typeInput.value] || '❓';
     }
+    // Ajustar varInput tras setear type
+    typeInput.dispatchEvent(new Event('change'));
     modal.classList.add('active');
   }
 
@@ -47,86 +60,87 @@ document.addEventListener('DOMContentLoaded', () => {
     modal.classList.remove('active');
   }
 
-  // Abrir modal
-  addBtn.addEventListener('click', () => openModal());
-
-  // Cerrar modal
-  closeBtn.addEventListener('click', closeModal);
-  window.addEventListener('click', e => {
-    if (e.target === modal) closeModal();
+  // Autocompletar variable según tipo
+  typeInput.addEventListener('change', () => {
+    switch (typeInput.value) {
+      case 'tempHum':
+        varInput.value    = 'temp,hum'; varInput.readOnly = true;
+        break;
+      case 'mq135':
+        varInput.value    = 'co2,methane,butane,propane'; varInput.readOnly = true;
+        break;
+      case 'generic':
+        varInput.value    = ''; varInput.readOnly = false; varInput.placeholder = 'variable esp32';
+        break;
+      default:
+        varInput.value    = typeInput.value; varInput.readOnly = true; varInput.placeholder = '';
+        break;
+    }
+    iconInput.value = defaultIcons[typeInput.value] || '❓';
   });
 
-  // Guardar (add / edit)
+  // Abrir "Añadir"
+  addBtn.addEventListener('click', () => openModal(false));
+  // Cerrar
+  closeBtn.addEventListener('click', closeModal);
+  window.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+  // Envío de formulario
   form.addEventListener('submit', async e => {
     e.preventDefault();
-    const isEdit = !!idInput.value;
+    const isEdit = Boolean(idInput.value);
     const url    = isEdit ? endpoints.edit : endpoints.add;
-    const formData = new FormData(form);
-    formData.set('deviceId', deviceId);  // asegurar que siempre venga
+    const fd     = new FormData(form);
+    fd.set('deviceId', deviceId);
 
     try {
-      const res  = await fetch(url, { method: 'POST', body: formData });
+      const res  = await fetch(url, { method: 'POST', body: fd });
       const json = await res.json();
-      if (res.ok && json.success) {
-        location.reload();
-      } else {
-        Swal.fire('Error', json.error || 'No se pudo guardar el sensor.', 'error');
-      }
+      if (res.ok && json.success) location.reload();
+      else Swal.fire('Error', json.error || 'No se pudo guardar.', 'error');
     } catch (err) {
       console.error(err);
-      Swal.fire('Error', 'Fallo de conexión o respuesta inválida.', 'error');
+      Swal.fire('Error', 'Fallo de conexión.', 'error');
     }
   });
 
-  // Editar sensor
-  document.querySelectorAll('.edit-icon').forEach(icon => {
-    icon.addEventListener('click', async () => {
-      const id = icon.dataset.id;
+  // Delegación para editar/eliminar
+  grid.addEventListener('click', async e => {
+    const editBtn = e.target.closest('.edit-icon');
+    const delBtn  = e.target.closest('.delete-icon');
+
+    if (editBtn) {
+      const id = editBtn.dataset.id;
       try {
-        const res = await fetch(endpoints.get(id));
+        const res  = await fetch(endpoints.get(id));
         const json = await res.json();
-        if (res.ok && json.success && json.sensor) {
-          openModal(true, json.sensor);
-        } else {
-          throw new Error(json.error || 'No encontrado');
-        }
+        if (res.ok && json.success) openModal(true, json.sensor);
+        else throw new Error(json.error || 'No encontrado');
       } catch (err) {
         console.error(err);
-        Swal.fire('Error', 'No se pudo cargar la información del sensor.', 'error');
+        Swal.fire('Error', 'No se pudo cargar el sensor.', 'error');
       }
-    });
-  });
+    }
 
-  // Eliminar sensor
-  document.querySelectorAll('.delete-icon').forEach(icon => {
-    icon.addEventListener('click', () => {
-      const widget = icon.closest('.widget');
-      const name   = widget.querySelector('h2').textContent.trim();
-      const id     = icon.dataset.id;
-
+    if (delBtn) {
+      const widget = delBtn.closest('.widget');
+      const name   = widget.querySelector('h2').innerText;
+      const id     = delBtn.dataset.id;
       Swal.fire({
-        title: `Eliminar “${name}”?`,
-        text: 'Esta acción no se puede deshacer.',
-        icon: 'warning',
-        showCancelButton: true,
-        confirmButtonText: 'Sí, eliminar',
-        cancelButtonText: 'Cancelar'
+        title: `Eliminar ${name}?`, text: 'No se podrá deshacer.', icon: 'warning',
+        showCancelButton: true, confirmButtonText: 'Sí, eliminar'
       }).then(async ({ isConfirmed }) => {
         if (!isConfirmed) return;
         try {
           const res  = await fetch(endpoints.delete(id), { method: 'POST' });
           const json = await res.json();
-          if (res.ok && json.success) {
-            location.reload();
-          } else {
-            throw new Error(json.error || 'Error al eliminar');
-          }
+          if (res.ok && json.success) location.reload();
+          else throw new Error(json.error || 'Error');
         } catch (err) {
           console.error(err);
-          Swal.fire('Error', 'No se pudo eliminar el sensor.', 'error');
+          Swal.fire('Error', 'No se pudo eliminar.', 'error');
         }
       });
-    });
+    }
   });
-
 });
