@@ -1,89 +1,111 @@
 <?php
-// /medtuciot/app/dashboard.php
 session_start();
 require __DIR__ . '/config.php';
 
-// 1) Lugares y dispositivos
+// 1) Lugares y dispositivos (mock o reales)
 $places = [
     ['id'=>1,'name'=>'Casa'],
     ['id'=>2,'name'=>'Oficina'],
     ['id'=>3,'name'=>'Campo1'],
 ];
 $devices_by_place = [
-    1=>[['id'=>110,'name'=>'ESP32-Casa-1'],['id'=>102,'name'=>'ESP32-Casa-2'],['id'=>103,'name'=>'ESP32-Casa-3']],
-    2=>[['id'=>201,'name'=>'ESP32-Oficina-1'],['id'=>202,'name'=>'ESP32-Oficina-2'],['id'=>203,'name'=>'ESP32-Oficina-3']],
-    3=>[['id'=>301,'name'=>'ESP32-Campo1-1'],['id'=>302,'name'=>'ESP32-Campo1-2'],['id'=>303,'name'=>'ESP32-Campo1-3']],
+    1 => [['id'=>110,'name'=>'ESP32-Casa-1'],['id'=>102,'name'=>'ESP32-Casa-2'],['id'=>103,'name'=>'ESP32-Casa-3']],
+    2 => [['id'=>201,'name'=>'ESP32-Oficina-1'],['id'=>202,'name'=>'ESP32-Oficina-2'],['id'=>203,'name'=>'ESP32-Oficina-3']],
+    3 => [['id'=>301,'name'=>'ESP32-Campo1-1'],['id'=>302,'name'=>'ESP32-Campo1-2'],['id'=>303,'name'=>'ESP32-Campo1-3']],
 ];
 
-// 2) Selección actual
-$currentPlaceId  = isset($_GET['place'])  ? intval($_GET['place'])  : $places[0]['id'];
-$currentDeviceId = isset($_GET['device']) ? intval($_GET['device']) : $devices_by_place[$currentPlaceId][0]['id'];
+// 2) Dispositivo actual
+$currentPlaceId  = isset($_GET['place'])  ? (int)$_GET['place']  : $places[0]['id'];
+$currentDeviceId = isset($_GET['device']) ? (int)$_GET['device'] : $devices_by_place[$currentPlaceId][0]['id'];
 
-// 3) Mapear cada variable a su(s) línea(s) de texto en el widget
+// 3) Definición de líneas (label, unidad, ID)
 $unitMap = [
     'tempHum'  => [
         ['label'=>'Temp',  'unit'=>'°C',    'spanId'=>'tempVal'],
         ['label'=>'Hum',   'unit'=>'%',     'spanId'=>'humVal'],
     ],
-    // MQ135 lo agrupamos manualmente más abajo
-    'co2'      => [['label'=>'CO₂',     'unit'=>'ppm',  'spanId'=>'co2Val']],
-    'methane'  => [['label'=>'Metano',  'unit'=>'ppm',  'spanId'=>'methaneVal']],
-    'butane'   => [['label'=>'Butano',  'unit'=>'ppm',  'spanId'=>'butaneVal']],
-    'propane'  => [['label'=>'Propano', 'unit'=>'ppm',  'spanId'=>'propaneVal']],
-    'soilHum'  => [['label'=>'',       'unit'=>'%',     'spanId'=>'soilHumVal']],
-    'ph'       => [['label'=>'',       'unit'=>'',      'spanId'=>'phVal']],
-    'ec'       => [['label'=>'',       'unit'=>'μS/cm', 'spanId'=>'ecVal']],
-    'h2o'      => [['label'=>'',       'unit'=>'%',     'spanId'=>'h2oVal']],
-    'nafta'    => [['label'=>'',       'unit'=>'%',     'spanId'=>'naftaVal']],
-    'aceite'   => [['label'=>'',       'unit'=>'%',     'spanId'=>'aceiteVal']],
+    'mq135'    => [
+        ['label'=>'CO₂',     'unit'=>'ppm', 'spanId'=>'co2Val'],
+        ['label'=>'Metano',  'unit'=>'ppm', 'spanId'=>'methaneVal'],
+        ['label'=>'Butano',  'unit'=>'ppm', 'spanId'=>'butaneVal'],
+        ['label'=>'Propano', 'unit'=>'ppm', 'spanId'=>'propaneVal'],
+    ],
+    'soilHum' => [['label'=>'', 'unit'=>'%',     'spanId'=>'soilHumVal']],
+    'ph'      => [['label'=>'', 'unit'=>'',      'spanId'=>'phVal']],
+    'ec'      => [['label'=>'', 'unit'=>'μS/cm', 'spanId'=>'ecVal']],
+    'h2o'     => [['label'=>'', 'unit'=>'%',     'spanId'=>'h2oVal']],
+    'nafta'   => [['label'=>'', 'unit'=>'%',     'spanId'=>'naftaVal']],
+    'aceite'  => [['label'=>'', 'unit'=>'%',     'spanId'=>'aceiteVal']],
+    'ldr'     => [['label'=>'', 'unit'=>'lux',   'spanId'=>'ldrVal']],
 ];
 
-// 4) Cargar sensores desde la tabla
+// 4) Obtener sensores desde BD
 $stmt = $pdo->prepare('SELECT * FROM sensors WHERE device_id = ? ORDER BY id');
-$stmt->execute([(int)$currentDeviceId]);
-$sensorsRaw = $stmt->fetchAll();
+$stmt->execute([$currentDeviceId]);
+$sensorsRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// 5) Reordenar para que MQ135 aparezca tras tempHum
-$order = ['tempHum','mq135'];  // el resto mantiene el orden natural
-usort($sensorsRaw, function($a,$b) use($order){
-    $va = strtolower($a['variable']);
-    $vb = strtolower($b['variable']);
-    $ia = array_search($va,$order);
-    $ib = array_search($vb,$order);
-    if($ia===false) $ia = 99;
-    if($ib===false) $ib = 99;
-    return $ia - $ib;
+// 5) Reordenar para mostrar tempHum y MQ135 primero
+$order = ['tempHum', 'mq135'];
+usort($sensorsRaw, function($a, $b) use ($order) {
+    // Usamos el valor original de sensor_type (case-sensitive)
+    $aType = $a['sensor_type'];
+    $bType = $b['sensor_type'];
+    $aIdx = array_search($aType, $order, true) !== false ? array_search($aType, $order, true) : PHP_INT_MAX;
+    $bIdx = array_search($bType, $order, true) !== false ? array_search($bType, $order, true) : PHP_INT_MAX;
+    return $aIdx - $bIdx;
 });
 
-// 6) Construir array final, evitando widget individuales de gases
-$sensors = [];
-foreach($sensorsRaw as $s){
-    if(strtolower($s['variable']) === 'mq135'){
-        // crear único widget MQ135
+// 6) Construir arreglo final para el frontend
+$sensors   = [];
+$agregados = [];
+
+foreach ($sensorsRaw as $s) {
+    // sensor_type sin strtolower para coincidir con "tempHum" y "mq135"
+    $type = $s['sensor_type'];
+    // variable la dejamos en minúsculas para indexar unitMap
+    $var  = strtolower($s['variable']);
+
+    // Un único gadget para tempHum (DHT22)
+    if ($type === 'tempHum' && !isset($agregados['tempHum'])) {
         $sensors[] = [
-            'id'       => $s['id'],
-            'name'     => $s['name'],
-            'icon'     => $s['icon'],
-            'variable' => 'mq135',
-            'lines'    => array_merge(
-                $unitMap['co2'],
-                $unitMap['methane'],
-                $unitMap['butane'],
-                $unitMap['propane']
-            )
+            'id'          => $s['id'],
+            'name'        => 'DHT22',
+            'icon'        => '🌡️',
+            'variable'    => 'tempHum',
+            'sensor_type'=> 'tempHum',
+            'lines'       => $unitMap['tempHum'],
         ];
-    } elseif(!in_array(strtolower($s['variable']), ['co2','methane','butane','propane'])) {
-        // resto de sensores normales
-        $var = $s['variable'];
+        $agregados['tempHum'] = true;
+    }
+
+    // Un único gadget para MQ135
+    elseif ($type === 'mq135' && !isset($agregados['mq135'])) {
         $sensors[] = [
-            'id'       => $s['id'],
-            'name'     => $s['name'],
-            'icon'     => $s['icon'],
-            'variable' => $var,
-            'lines'    => $unitMap[$var] ?? []
+            'id'           => $s['id'],
+            'name'         => 'MQ135',
+            'icon'         => '⛽',
+            'variable'     => 'mq135',
+            'sensor_type' => 'mq135',
+            'lines'        => $unitMap['mq135'],
+        ];
+        $agregados['mq135'] = true;
+    }
+
+    // Resto de sensores simples (evitamos duplicar las variables de tempHum y MQ135)
+    elseif (!in_array($var, ['co2','methane','butane','propane','temp','hum'], true)) {
+        $sensors[] = [
+            'id'           => $s['id'],
+            'name'         => $s['name'],
+            'icon'         => $s['icon'],
+            'variable'     => $var,
+            'sensor_type' => $type,
+            'lines'        => $unitMap[$var] ?? [],
         ];
     }
 }
+
+// Ahora $sensors lleva el orden y los gadgets corregidos para tempHum y mq135
+
 
 // Actuadores simulados
 $actuators = [
@@ -269,32 +291,97 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
     <h2><i class="ri-add-line"></i> Añadir Sensor</h2>
   </div>
 
-  <?php foreach ($sensors as $sensor): ?>
-    <div class="widget" data-sensor="<?= htmlspecialchars($sensor['variable']) ?>">
+  <?php
+  // Agrupar sensores por tipo especial
+  $grouped = [];
+
+  foreach ($sensors as $sensor) {
+    $type     = $sensor['sensor_type'] ?? '';
+    $variable = $sensor['variable'];
+
+    if ($type === 'tempHum') {
+      // Agrupación DHT22
+      $grouped['tempHum']['name']        = 'DHT22';
+      $grouped['tempHum']['icon']        = '🌡️';
+      $grouped['tempHum']['id']          = $sensor['id'];
+      $grouped['tempHum']['sensor_type'] = 'tempHum';
+      $grouped['tempHum']['lines']     ??= [];
+
+      // Usamos $variable ('temp' o 'hum') para asignar el spanId y la unidad
+      $grouped['tempHum']['lines'][] = [
+        'label'  => $sensor['name'],
+        'spanId' => $variable === 'temp' ? 'tempVal' : 'humVal',
+        'unit'   => $variable === 'temp' ? '°C'      : '%'
+      ];
+    }
+    elseif ($type === 'mq135') {
+      // Agrupación MQ135
+      $grouped['mq135']['name']        = 'MQ135';
+      $grouped['mq135']['icon']        = '⛽';
+      $grouped['mq135']['id']          = $sensor['id'];
+      $grouped['mq135']['sensor_type'] = 'mq135';
+      $grouped['mq135']['lines']     ??= [];
+
+      $grouped['mq135']['lines'][] = [
+        'label'  => $sensor['name'],
+        'spanId' => match($variable) {
+          'co2'     => 'co2Val',
+          'methane' => 'methaneVal',
+          'butane'  => 'butaneVal',
+          'propane' => 'propaneVal',
+          default   => $variable . 'Val'
+        },
+        'unit'   => 'ppm'
+      ];
+    }
+    else {
+      // Sensor individual
+      $grouped[$variable]['name']        = $sensor['name'];
+      $grouped[$variable]['icon']        = $sensor['icon'];
+      $grouped[$variable]['id']          = $sensor['id'];
+      $grouped[$variable]['sensor_type'] = $type;
+      $grouped[$variable]['lines']       = [[
+        'label'  => '',
+        'spanId' => $variable . 'Val',
+        'unit'   => match($variable) {
+          'ph'                  => '',
+          'ec'                  => 'μS/cm',
+          'soilHum','h2o','nafta','aceite' => '%',
+          default               => ''
+        }
+      ]];
+    }
+  }
+
+  // Renderizar los gadgets
+  foreach ($grouped as $key => $sensor): ?>
+    <div class="widget" data-sensor="<?= htmlspecialchars($key) ?>">
       <h2>
         <?= htmlspecialchars($sensor['icon']) ?>
         <?= htmlspecialchars($sensor['name']) ?>
         <i class="ri-line-chart-fill chart-icon"
-           data-sensor="<?= htmlspecialchars($sensor['variable']) ?>"
+           data-sensor="<?= htmlspecialchars($key) ?>"
            title="Ver gráfico <?= htmlspecialchars($sensor['name']) ?>"></i>
       </h2>
 
       <?php foreach ($sensor['lines'] as $line): ?>
         <p>
-          <?= $line['label'] !== '' ? htmlspecialchars($line['label']) . ': ' : '' ?>
+          <?= !empty($line['label']) ? htmlspecialchars($line['label']) . ': ' : '' ?>
           <span id="<?= htmlspecialchars($line['spanId']) ?>">—</span>
           <?= htmlspecialchars($line['unit']) ?>
         </p>
       <?php endforeach; ?>
 
-      <div class="widget-actions">
-        <i class="ri-pencil-line edit-icon"
-           data-id="<?= (int)$sensor['id'] ?>"
-           title="Editar sensor"></i>
-        <i class="ri-delete-bin-line delete-icon"
-           data-id="<?= (int)$sensor['id'] ?>"
-           title="Eliminar sensor"></i>
-      </div>
+      <?php if (!in_array($key, ['tempHum','mq135'], true)): ?>
+        <div class="widget-actions">
+          <i class="ri-pencil-line edit-icon"
+             data-id="<?= (int)($sensor['id'] ?? 0) ?>"
+             title="Editar sensor"></i>
+          <i class="ri-delete-bin-line delete-icon"
+             data-id="<?= (int)($sensor['id'] ?? 0) ?>"
+             title="Eliminar sensor"></i>
+        </div>
+      <?php endif; ?>
     </div>
   <?php endforeach; ?>
 </div>
@@ -336,6 +423,7 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
     </form>
   </div>
 </div>
+
 
 
 

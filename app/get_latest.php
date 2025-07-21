@@ -1,5 +1,5 @@
 <?php
-require_once 'config.php'; // contiene conexión $pdo
+require_once 'config.php';
 header('Content-Type: application/json');
 
 if (!isset($_GET['deviceId'])) {
@@ -11,75 +11,62 @@ if (!isset($_GET['deviceId'])) {
 $deviceId = (int) $_GET['deviceId'];
 
 try {
-  // Obtener todos los tipos de sensores distintos para ese device
-  $stmt = $pdo->prepare("
-    SELECT sensor_type, MAX(timestamp) as last_time
-    FROM sensor_data
-    WHERE device_id = ?
-    GROUP BY sensor_type
-  ");
-  $stmt->execute([$deviceId]);
-  $sensorTypes = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
   $result = [];
 
-  foreach ($sensorTypes as $row) {
-    $sensorType = $row['sensor_type'];
+  // Consulta todo el sensor_data reciente
+  $stmt = $pdo->prepare("
+    SELECT sensor_type, value, unit, timestamp
+    FROM sensor_data
+    WHERE device_id = ?
+    AND timestamp >= NOW() - INTERVAL 1 DAY
+    ORDER BY timestamp DESC
+  ");
+  $stmt->execute([$deviceId]);
+  $allData = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Obtener últimas 10 entradas de ese tipo
-    $stmt = $pdo->prepare("
-      SELECT sensor_type, value, unit, timestamp
-      FROM sensor_data
-      WHERE device_id = ? AND sensor_type = ?
-      ORDER BY timestamp DESC
-      LIMIT 10
-    ");
-    $stmt->execute([$deviceId, $sensorType]);
-    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Agrupación especial: tempHum
-    if (in_array($sensorType, ['temp', 'hum'])) {
-      $temp = null;
-      $hum  = null;
-      foreach ($data as $d) {
-        if ($d['sensor_type'] === 'temp') $temp = $d['value'];
-        if ($d['sensor_type'] === 'hum')  $hum  = $d['value'];
-      }
-      // Solo agregar si hay al menos un valor
-      if ($temp !== null || $hum !== null) {
-        $result[] = [
-          'sensor_type' => 'tempHum',
-          'value' => ['temp' => $temp, 'hum' => $hum]
-        ];
-      }
+  $latest = [];
+  foreach ($allData as $row) {
+    $type = $row['sensor_type'];
+    if (!isset($latest[$type])) {
+      $latest[$type] = $row;
     }
+  }
 
-    // Agrupación especial: mq135
-    elseif (in_array($sensorType, ['co2', 'methane', 'butane', 'propane'])) {
-      $map = [];
-      foreach ($data as $d) {
-        $map[$d['sensor_type']] = $d['value'];
-      }
-      if (!empty($map)) {
-        $result[] = [
-          'sensor_type' => 'mq135',
-          'value' => $map
-        ];
-      }
-    }
+  // Agrupar temp + hum => tempHum
+  $temp = $latest['temp']['value'] ?? null;
+  $hum  = $latest['hum']['value']  ?? null;
+  if ($temp !== null || $hum !== null) {
+    $result[] = [
+      'sensor_type' => 'tempHum',
+      'value' => ['temp' => $temp, 'hum' => $hum]
+    ];
+    unset($latest['temp'], $latest['hum']);
+  }
 
-    // Sensores simples
-    else {
-      $latest = $data[0] ?? null;
-      if ($latest) {
-        $result[] = [
-          'sensor_type' => $latest['sensor_type'],
-          'value'       => $latest['value'],
-          'unit'        => $latest['unit'],
-          'timestamp'   => $latest['timestamp']
-        ];
-      }
+  // Agrupar gases MQ135
+  $gases = ['co2', 'methane', 'butane', 'propane'];
+  $gasValues = [];
+  foreach ($gases as $g) {
+    if (isset($latest[$g])) {
+      $gasValues[$g] = $latest[$g]['value'];
+      unset($latest[$g]);
     }
+  }
+  if (!empty($gasValues)) {
+    $result[] = [
+      'sensor_type' => 'mq135',
+      'value' => $gasValues
+    ];
+  }
+
+  // El resto de sensores
+  foreach ($latest as $row) {
+    $result[] = [
+      'sensor_type' => $row['sensor_type'],
+      'value'       => $row['value'],
+      'unit'        => $row['unit'],
+      'timestamp'   => $row['timestamp']
+    ];
   }
 
   echo json_encode($result);

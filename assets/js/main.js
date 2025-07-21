@@ -1,7 +1,6 @@
 // assets/js/main.js
 
 document.addEventListener('DOMContentLoaded', () => {
-
   const deviceIdInput   = document.getElementById('deviceId');
   const currentDeviceId = deviceIdInput ? deviceIdInput.value : null;
 
@@ -31,11 +30,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Menu navigation ---
   document.querySelectorAll('.sidebar .menu li').forEach(item => {
     item.addEventListener('click', () => {
-      document.querySelectorAll('.sidebar .menu li')
-        .forEach(i => i.classList.remove('active'));
+      document.querySelectorAll('.sidebar .menu li').forEach(i => i.classList.remove('active'));
       item.classList.add('active');
-      document.querySelectorAll('.page')
-        .forEach(p => p.classList.remove('active-page'));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active-page'));
       const pageId = item.dataset.page;
       if (pageId) document.getElementById(pageId).classList.add('active-page');
     });
@@ -43,40 +40,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Theme toggle ---
   const themeIcon = document.getElementById('themeToggle');
+  const themeIconDrawer = document.getElementById('themeToggleDrawer');
+
   function applyTheme(dark) {
     document.body.classList.toggle('dark', dark);
-    themeIcon.classList.toggle('ri-sun-line', !dark);
-    themeIcon.classList.toggle('ri-moon-line', dark);
+    themeIcon?.classList.toggle('ri-sun-line', !dark);
+    themeIcon?.classList.toggle('ri-moon-line', dark);
+    themeIconDrawer?.classList.toggle('ri-sun-line', !dark);
+    themeIconDrawer?.classList.toggle('ri-moon-line', dark);
   }
+
   let darkMode = localStorage.getItem('theme') === 'dark';
   applyTheme(darkMode);
-  themeIcon.addEventListener('click', () => {
+
+  function toggleTheme() {
     darkMode = !darkMode;
     localStorage.setItem('theme', darkMode ? 'dark' : 'light');
     applyTheme(darkMode);
-  });
-
-  const themeIconDrawer = document.getElementById('themeToggleDrawer');
-  if (themeIconDrawer) {
-    themeIconDrawer.addEventListener('click', () => {
-      themeIcon.click();
-    });
   }
 
-  // --- Language & Notifications ---
-  document.getElementById('langToggle').addEventListener('click', () =>
-    Swal.fire('Cambio de idioma', 'Aquí implementa ES/EN', 'info')
-  );
-  document.getElementById('notifToggle').addEventListener('click', () =>
-    Swal.fire('Notificaciones', 'No hay nuevas notificaciones.', 'info')
-  );
+  themeIcon?.addEventListener('click', toggleTheme);
+  themeIconDrawer?.addEventListener('click', toggleTheme);
 
-  const langDrawer  = document.getElementById('langToggleDrawer');
-  const notifDrawer = document.getElementById('notifToggleDrawer');
-  if (langDrawer)  langDrawer .addEventListener('click', () => document.getElementById('langToggle').click());
-  if (notifDrawer) notifDrawer.addEventListener('click', () => document.getElementById('notifToggle').click());
+  // --- Idioma y notificaciones ---
+  const langBtn = document.getElementById('langToggle');
+  const notifBtn = document.getElementById('notifToggle');
+  langBtn?.addEventListener('click', () => Swal.fire('Cambio de idioma', 'Aquí implementa ES/EN', 'info'));
+  notifBtn?.addEventListener('click', () => Swal.fire('Notificaciones', 'No hay nuevas notificaciones.', 'info'));
 
-  // --- Generator status simulation ---
+  document.getElementById('langToggleDrawer')?.addEventListener('click', () => langBtn?.click());
+  document.getElementById('notifToggleDrawer')?.addEventListener('click', () => notifBtn?.click());
+
+  // --- Simulación estado del generador ---
   const genStatusEl = document.getElementById('genStatus');
   if (genStatusEl) {
     let genOn = false;
@@ -88,57 +83,33 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 10000);
   }
 
-  function rand(min, max, decimals = 2) {
-    return (Math.random() * (max - min) + min).toFixed(decimals);
-  }
-
-  // --- SENSORES SEGUROS ---
+  // --- Simulación sensores (DHT22 JSON y MQ135 JSON) ---
   async function updateSensors() {
     try {
       const res = await fetch(`${BASE_PATH}/app/get_latest.php?deviceId=${currentDeviceId}`);
-      if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
       const list = await res.json();
-      if (!Array.isArray(list)) throw new Error('Formato de datos inválido');
 
       list.forEach(s => {
-        if (!s || typeof s !== 'object' || !s.sensor_type || s.value === undefined) return;
-
         if (s.sensor_type === 'tempHum') {
-          const tempEl = document.getElementById('tempVal');
-          const humEl  = document.getElementById('humVal');
-          if (typeof s.value === 'string') {
-            try {
-              const obj = JSON.parse(s.value);
-              if ('temp' in obj && tempEl) tempEl.textContent = obj.temp;
-              if ('hum'  in obj && humEl)  humEl.textContent  = obj.hum;
-            } catch (e) {
-              console.warn('tempHum inválido:', s.value);
-            }
+          try {
+            const parsed = typeof s.value === 'string' ? JSON.parse(s.value) : s.value;
+            if (parsed?.temp) document.getElementById('tempVal').textContent = parsed.temp;
+            if (parsed?.hum)  document.getElementById('humVal').textContent  = parsed.hum;
+          } catch (e) {
+            console.warn('Error parseando tempHum:', s.value);
           }
         }
-
         else if (s.sensor_type === 'mq135') {
-          if (typeof s.value === 'string') {
-            try {
-              const obj = JSON.parse(s.value);
-              const map = {
-                co2:     'co2Val',
-                methane: 'methaneVal',
-                butane:  'butaneVal',
-                propane: 'propaneVal'
-              };
-              Object.entries(map).forEach(([key, id]) => {
-                if (obj[key] !== undefined) {
-                  const el = document.getElementById(id);
-                  if (el) el.textContent = obj[key];
-                }
-              });
-            } catch (e) {
-              console.warn('mq135 inválido:', s.value);
-            }
+          try {
+            const parsed = typeof s.value === 'string' ? JSON.parse(s.value) : s.value;
+            if (parsed?.co2)     document.getElementById('co2Val')    .textContent = parsed.co2;
+            if (parsed?.methane) document.getElementById('methaneVal').textContent = parsed.methane;
+            if (parsed?.butane)  document.getElementById('butaneVal') .textContent = parsed.butane;
+            if (parsed?.propane) document.getElementById('propaneVal').textContent = parsed.propane;
+          } catch (e) {
+            console.warn('Error parseando mq135:', s.value);
           }
         }
-
         else {
           const idMap = {
             soilHum: 'soilHumVal',
@@ -148,24 +119,15 @@ document.addEventListener('DOMContentLoaded', () => {
             nafta:   'naftaVal',
             aceite:  'aceiteVal'
           };
-          const id = idMap[s.sensor_type];
-          if (id) {
-            const el = document.getElementById(id);
+          const elId = idMap[s.sensor_type];
+          if (elId) {
+            const el = document.getElementById(elId);
             if (el) el.textContent = s.value;
           }
         }
       });
     } catch (err) {
-      console.warn('❌ Error al actualizar sensores:', err);
-      Swal.fire({
-        icon: 'error',
-        title: 'Error al cargar sensores',
-        text: 'No se pudo obtener la información. Revisa la conexión.',
-        toast: true,
-        timer: 4000,
-        position: 'top-end',
-        showConfirmButton: false
-      });
+      console.warn('Error al actualizar sensores:', err);
     }
   }
 
@@ -185,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('lastReset').textContent =
     `Último reset: ${rebootHistory[0].ts}`;
 
-  document.getElementById('showReboots').addEventListener('click', () => {
+  document.getElementById('showReboots')?.addEventListener('click', () => {
     const icons = {
       'Mantenimiento':         '<i class="ri-wrench-line"></i>',
       'Actualización firmware':'<i class="ri-refresh-line"></i>',
@@ -194,17 +156,17 @@ document.addEventListener('DOMContentLoaded', () => {
       'Alimentacion':          '<i class="ri-flashlight-line"></i>',
       'Reset remoto':          '<i class="ri-restart-line"></i>'
     };
-    const listHtml = rebootHistory.map(r =>
+    const html = rebootHistory.map(r =>
       `<li>${icons[r.reason] || '<i class="ri-time-line"></i>'} ${r.ts} – ${r.reason}</li>`
     ).join('');
     Swal.fire({
       title: 'Historial de Reinicios',
-      html: `<ul style="text-align:left; list-style:none; padding:0">${listHtml}</ul>`,
+      html: `<ul style="text-align:left; list-style:none; padding:0">${html}</ul>`,
       showCloseButton: true
     });
   });
 
-  document.getElementById('doReboot').addEventListener('click', async () => {
+  document.getElementById('doReboot')?.addEventListener('click', async () => {
     const { isConfirmed } = await Swal.fire({
       title: 'Confirmar reset remoto?',
       icon: 'warning',
@@ -229,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   document.querySelectorAll('.actuators input[type=checkbox]').forEach(cb => {
-    const id   = cb.dataset.device;
+    const id = cb.dataset.device;
     const logs = actuatorLogs[id] || [];
     cb.checked = logs.length ? logs[0].state === 'ON' : Math.random() < 0.5;
     cb.addEventListener('change', () => {
@@ -263,7 +225,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   document.querySelectorAll('.info-act').forEach(btn => {
     btn.addEventListener('click', () => {
-      const id  = btn.dataset.id;
+      const id = btn.dataset.id;
       const log = actuatorLogs[id] || [];
       const list = log.map(e =>
         `<li><i class="ri-time-line"></i> ${e.ts} — ${e.state}</li>`
@@ -292,5 +254,4 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
   });
-
 });
