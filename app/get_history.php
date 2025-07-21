@@ -14,19 +14,31 @@ if (!$deviceId || !$sensorType) {
     exit;
 }
 
-// Consultar datos históricos para el sensor y la fecha indicada
-$sql = "
-  SELECT
-    sensor_type,
-    value,
-    unit,
-    timestamp
-  FROM sensor_data
-  WHERE device_id   = :device_id
-    AND sensor_type = :sensor_type
-    AND DATE(timestamp) = :date
-  ORDER BY timestamp ASC
-";
+// JSON compuestos (almacenados como valor único)
+$compositeSensors = ['tempHum', 'mq135'];
+
+if (in_array($sensorType, $compositeSensors)) {
+    // Obtener registros donde sensor_type = 'tempHum' o 'mq135'
+    $sql = "
+      SELECT sensor_type, value, '' AS unit, timestamp
+      FROM sensor_data
+      WHERE device_id   = :device_id
+        AND sensor_type = :sensor_type
+        AND DATE(timestamp) = :date
+      ORDER BY timestamp ASC
+    ";
+} else {
+    // Sensores simples (1 valor por fila)
+    $sql = "
+      SELECT sensor_type, value, unit, timestamp
+      FROM sensor_data
+      WHERE device_id   = :device_id
+        AND sensor_type = :sensor_type
+        AND DATE(timestamp) = :date
+      ORDER BY timestamp ASC
+    ";
+}
+
 $stmt = $pdo->prepare($sql);
 $stmt->execute([
     'device_id'   => $deviceId,
@@ -36,5 +48,5 @@ $stmt->execute([
 
 $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Devolver JSON puro
+// Devolver en formato JSON
 echo json_encode($rows);

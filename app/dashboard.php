@@ -362,6 +362,7 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
         <option value="🌬️">🌬️ Viento</option>
         <option value="📏">📏 Distancia</option>
         <option value="💡">💡 Luz</option>
+        <option value="⚡">⚡ Eléctrico</option>
         <option value="🔋">🔋 Batería</option>
         <option value="🌱">🌱 Suelo</option>
         <option value="🌊">🌊 Nivel</option>
