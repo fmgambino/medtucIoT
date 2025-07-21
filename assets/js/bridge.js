@@ -1,4 +1,3 @@
-// bridge.js corregido
 const mqtt  = require('mqtt');
 const mysql = require('mysql2/promise');
 
@@ -8,16 +7,6 @@ const mysql = require('mysql2/promise');
     user: 'root',
     database: 'medtuciot'
   });
-
-  // Mapas de unidades para cada subtipo de datos JSON y para valores simples
-  const unitMapJson = {
-    temp: '°C',
-    hum: '%',
-    co2: 'ppm',
-    methane: 'ppm',
-    butane: 'ppm',
-    propane: 'ppm'
-  };
 
   const unitMapSimple = {
     soilHum: '%',
@@ -33,40 +22,56 @@ const mysql = require('mysql2/promise');
 
   client.on('connect', () => {
     client.subscribe('medtucIoT/+/+');
-    console.log('MQTT conectado y suscrito a medtucIoT/+/+');
+    console.log('✅ MQTT conectado y suscrito a medtucIoT/+/+');
   });
 
   client.on('message', async (topic, msg) => {
-    try {
-      const [, deviceId, variable] = topic.split('/');
-      const payload = msg.toString();
+    const [, deviceId, variable] = topic.split('/');
+    const payload = msg.toString();
 
-      // Detectar si es JSON compuesto o valor simple
+    try {
       if (payload.startsWith('{') && payload.endsWith('}')) {
-        // JSON compuesto (tempHum, mq135)
-        const data = JSON.parse(payload);
-        for (let key in data) {
-          const val = parseFloat(data[key]);
-          const unit = unitMapJson[key] ?? '';
+        // JSON compuesto
+        let parsed;
+        try {
+          parsed = JSON.parse(payload);
+          // Validar campos
+          if (variable === 'tempHum' && (parsed.temp == null || parsed.hum == null)) {
+            throw new Error('Campos faltantes en tempHum');
+          }
+          if (variable === 'mq135' && (
+            parsed.co2 == null && parsed.methane == null &&
+            parsed.butane == null && parsed.propane == null
+          )) {
+            throw new Error('Campos faltantes en mq135');
+          }
+
           await db.execute(
-            'INSERT INTO sensor_data (device_id, sensor_type, value, unit) VALUES (?, ?, ?, ?)',
-            [deviceId, key, val, unit]
+            'INSERT INTO sensor_data (device_id, sensor_type, value, unit, timestamp) VALUES (?, ?, ?, ?, NOW())',
+            [deviceId, variable, JSON.stringify(parsed), '',]
           );
+          console.log(`✅ Insertado JSON: ${topic} → ${payload}`);
+        } catch (e) {
+          console.error(`❌ JSON inválido en ${topic}:`, payload, '→', e.message);
         }
+
       } else {
-        // Valor simple (soilHum, ph, etc.)
+        // Sensor simple
         const val = parseFloat(payload);
+        if (isNaN(val)) {
+          console.warn(`⚠️ Valor no numérico recibido para ${topic}: ${payload}`);
+          return;
+        }
         const unit = unitMapSimple[variable] ?? '';
         await db.execute(
-          'INSERT INTO sensor_data (device_id, sensor_type, value, unit) VALUES (?, ?, ?, ?)',
+          'INSERT INTO sensor_data (device_id, sensor_type, value, unit, timestamp) VALUES (?, ?, ?, ?, NOW())',
           [deviceId, variable, val, unit]
         );
+        console.log(`✅ Insertado simple: ${topic} → ${val}`);
       }
 
-      console.log(`Dato insertado: ${topic} → ${payload}`);
-
     } catch (err) {
-      console.error('MQTT → DB error:', err);
+      console.error('❌ Error general MQTT → DB:', err);
     }
   });
 })();
