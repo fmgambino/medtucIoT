@@ -19,7 +19,7 @@ $devices_by_place = [
 $actuators = [
     [
       'id'    => 'A1',
-      'name'  => 'Bomba Agua',
+      'name'  => 'Grupo Electrógeno',
       'state' => rand(0,1),
       'log'   => [
         ['ts'=>'2025-07-19 10:00','state'=>'ON'],
