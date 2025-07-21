@@ -3,54 +3,88 @@
 session_start();
 require __DIR__ . '/config.php';
 
-// — Simulación de datos (reemplaza con tus consultas reales) —
+// 1) Lugares y dispositivos
 $places = [
     ['id'=>1,'name'=>'Casa'],
     ['id'=>2,'name'=>'Oficina'],
     ['id'=>3,'name'=>'Campo1'],
 ];
 $devices_by_place = [
-    1=>[['id'=>101,'name'=>'ESP32-Casa-1'],['id'=>102,'name'=>'ESP32-Casa-2'],['id'=>103,'name'=>'ESP32-Casa-3']],
+    1=>[['id'=>110,'name'=>'ESP32-Casa-1'],['id'=>102,'name'=>'ESP32-Casa-2'],['id'=>103,'name'=>'ESP32-Casa-3']],
     2=>[['id'=>201,'name'=>'ESP32-Oficina-1'],['id'=>202,'name'=>'ESP32-Oficina-2'],['id'=>203,'name'=>'ESP32-Oficina-3']],
     3=>[['id'=>301,'name'=>'ESP32-Campo1-1'],['id'=>302,'name'=>'ESP32-Campo1-2'],['id'=>303,'name'=>'ESP32-Campo1-3']],
 ];
 
-// — Determinar place y device seleccionados (GET o por defecto) —
+// 2) Selección actual
 $currentPlaceId  = isset($_GET['place'])  ? intval($_GET['place'])  : $places[0]['id'];
 $currentDeviceId = isset($_GET['device']) ? intval($_GET['device']) : $devices_by_place[$currentPlaceId][0]['id'];
 
+// 3) Mapear cada variable a su(s) línea(s) de texto en el widget
 $unitMap = [
-    'tempHum' => [
-        ['label' => 'Temp', 'unit' => '°C',    'spanId' => 'tempVal'],
-        ['label' => 'Hum',  'unit' => '%',     'spanId' => 'humVal'],
+    'tempHum'  => [
+        ['label'=>'Temp',  'unit'=>'°C',    'spanId'=>'tempVal'],
+        ['label'=>'Hum',   'unit'=>'%',     'spanId'=>'humVal'],
     ],
-    'co2'     => [
-        ['label' => 'CO₂',  'unit' => 'ppm',   'spanId' => 'co2Val'],
-    ],
-    'soilHum' => [
-        ['label' => '',     'unit' => '%',     'spanId' => 'soilHumVal'],
-    ],
-    'ph'      => [
-        ['label' => '',     'unit' => '',      'spanId' => 'phVal'],
-    ],
-    'ec'      => [
-        ['label' => '',     'unit' => 'μS/cm', 'spanId' => 'ecVal'],
-    ],
-    'h2o'     => [
-        ['label' => '',     'unit' => '%',     'spanId' => 'h2oVal'],
-    ],
-    'nafta'   => [
-        ['label' => '',     'unit' => '%',     'spanId' => 'naftaVal'],
-    ],
-    'aceite'  => [
-        ['label' => '',     'unit' => '%',     'spanId' => 'aceiteVal'],
-    ],
+    // MQ135 lo agrupamos manualmente más abajo
+    'co2'      => [['label'=>'CO₂',     'unit'=>'ppm',  'spanId'=>'co2Val']],
+    'methane'  => [['label'=>'Metano',  'unit'=>'ppm',  'spanId'=>'methaneVal']],
+    'butane'   => [['label'=>'Butano',  'unit'=>'ppm',  'spanId'=>'butaneVal']],
+    'propane'  => [['label'=>'Propano', 'unit'=>'ppm',  'spanId'=>'propaneVal']],
+    'soilHum'  => [['label'=>'',       'unit'=>'%',     'spanId'=>'soilHumVal']],
+    'ph'       => [['label'=>'',       'unit'=>'',      'spanId'=>'phVal']],
+    'ec'       => [['label'=>'',       'unit'=>'μS/cm', 'spanId'=>'ecVal']],
+    'h2o'      => [['label'=>'',       'unit'=>'%',     'spanId'=>'h2oVal']],
+    'nafta'    => [['label'=>'',       'unit'=>'%',     'spanId'=>'naftaVal']],
+    'aceite'   => [['label'=>'',       'unit'=>'%',     'spanId'=>'aceiteVal']],
 ];
 
-// — Traer sensores desde la tabla sensors para este dispositivo —
-$stmt = $pdo->prepare('SELECT * FROM sensors WHERE device_id = ?');
-$stmt->execute([$currentDeviceId]);
-$sensors = $stmt->fetchAll();  // array de sensores
+// 4) Cargar sensores desde la tabla
+$stmt = $pdo->prepare('SELECT * FROM sensors WHERE device_id = ? ORDER BY id');
+$stmt->execute([(int)$currentDeviceId]);
+$sensorsRaw = $stmt->fetchAll();
+
+// 5) Reordenar para que MQ135 aparezca tras tempHum
+$order = ['tempHum','mq135'];  // el resto mantiene el orden natural
+usort($sensorsRaw, function($a,$b) use($order){
+    $va = strtolower($a['variable']);
+    $vb = strtolower($b['variable']);
+    $ia = array_search($va,$order);
+    $ib = array_search($vb,$order);
+    if($ia===false) $ia = 99;
+    if($ib===false) $ib = 99;
+    return $ia - $ib;
+});
+
+// 6) Construir array final, evitando widget individuales de gases
+$sensors = [];
+foreach($sensorsRaw as $s){
+    if(strtolower($s['variable']) === 'mq135'){
+        // crear único widget MQ135
+        $sensors[] = [
+            'id'       => $s['id'],
+            'name'     => $s['name'],
+            'icon'     => $s['icon'],
+            'variable' => 'mq135',
+            'lines'    => array_merge(
+                $unitMap['co2'],
+                $unitMap['methane'],
+                $unitMap['butane'],
+                $unitMap['propane']
+            )
+        ];
+    } elseif(!in_array(strtolower($s['variable']), ['co2','methane','butane','propane'])) {
+        // resto de sensores normales
+        $var = $s['variable'];
+        $sensors[] = [
+            'id'       => $s['id'],
+            'name'     => $s['name'],
+            'icon'     => $s['icon'],
+            'variable' => $var,
+            'lines'    => $unitMap[$var] ?? []
+        ];
+    }
+}
+
 // Actuadores simulados
 $actuators = [
     [
@@ -235,22 +269,17 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
     <h2><i class="ri-add-line"></i> Añadir Sensor</h2>
   </div>
 
-  <?php foreach ($sensors as $sensor): 
-    $name     = $sensor['name'];
-    $icon     = $sensor['icon'];
-    $variable = $sensor['variable'];
-    $lines    = $unitMap[$variable] ?? [];
-    $id       = (int)$sensor['id'];
-  ?>
-    <div class="widget" data-sensor="<?= htmlspecialchars($name) ?>">
+  <?php foreach ($sensors as $sensor): ?>
+    <div class="widget" data-sensor="<?= htmlspecialchars($sensor['variable']) ?>">
       <h2>
-        <?= htmlspecialchars($icon) ?> <?= htmlspecialchars($name) ?>
+        <?= htmlspecialchars($sensor['icon']) ?>
+        <?= htmlspecialchars($sensor['name']) ?>
         <i class="ri-line-chart-fill chart-icon"
-           data-sensor="<?= htmlspecialchars($name) ?>"
-           title="Ver gráfico <?= htmlspecialchars($name) ?>"></i>
+           data-sensor="<?= htmlspecialchars($sensor['variable']) ?>"
+           title="Ver gráfico <?= htmlspecialchars($sensor['name']) ?>"></i>
       </h2>
 
-      <?php foreach ($lines as $line): ?>
+      <?php foreach ($sensor['lines'] as $line): ?>
         <p>
           <?= $line['label'] !== '' ? htmlspecialchars($line['label']) . ': ' : '' ?>
           <span id="<?= htmlspecialchars($line['spanId']) ?>">—</span>
@@ -260,10 +289,10 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
 
       <div class="widget-actions">
         <i class="ri-pencil-line edit-icon"
-           data-id="<?= $id ?>"
+           data-id="<?= (int)$sensor['id'] ?>"
            title="Editar sensor"></i>
         <i class="ri-delete-bin-line delete-icon"
-           data-id="<?= $id ?>"
+           data-id="<?= (int)$sensor['id'] ?>"
            title="Eliminar sensor"></i>
       </div>
     </div>
@@ -294,16 +323,22 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
         <option value="💧">Humedad</option>
         <option value="🧪">pH</option>
         <option value="⛽">Gases</option>
+        <option value="🛢️">Combustibles</option>
         <option value="🌬️">Viento</option>
         <option value="📏">Distancia</option>
         <option value="💡">Luz</option>
-        <option value="💧">Nivel</option>
+        <option value="🔋">Batería</option>
+        <option value="🌱">Suelo</option>
+        <option value="🌊">Nivel</option>
       </select>
 
       <button type="submit" id="saveSensorBtn">Guardar</button>
     </form>
   </div>
 </div>
+
+
+
 
 
        <div class="actuators">
@@ -376,6 +411,8 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
 </script>
 <script defer src="<?= BASE_PATH ?>/assets/js/main.js"></script>
 <script defer src="<?= BASE_PATH ?>/assets/js/addSensor.js"></script>
+<script defer src="<?= BASE_PATH ?>/assets/js/charts_sensores.js"></script>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@^2.0.0"></script>
 

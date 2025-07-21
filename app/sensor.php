@@ -2,8 +2,16 @@
 declare(strict_types=1);
 // /medtuciot/app/sensor.php
 
+// Mostrar errores de PHP (quítalo en producción)
+ini_set('display_errors', '1');
+error_reporting(E_ALL);
+
 header('Content-Type: application/json; charset=utf-8');
+
 require __DIR__ . '/config.php';
+
+// Asegurarnos de que PDO devuelva excepciones
+$pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 $action = $_REQUEST['action'] ?? '';
 $method = $_SERVER['REQUEST_METHOD'];
@@ -26,11 +34,11 @@ try {
             }
             $stmt = $pdo->prepare(
                 'SELECT id, device_id, name, port, variable, icon 
-                 FROM sensors 
-                 WHERE id = ?'
+                   FROM sensors 
+                  WHERE id = ?'
             );
             $stmt->execute([$id]);
-            $sensor = $stmt->fetch();
+            $sensor = $stmt->fetch(PDO::FETCH_ASSOC);
             respond(['success' => true, 'sensor' => $sensor ?: null]);
             break;
 
@@ -46,6 +54,14 @@ try {
             if (!$deviceId || !$name || !$port || !$variable || !$icon) {
                 respond(['success' => false, 'error' => 'Faltan datos'], 400);
             }
+
+            // Verificar existencia de device_id
+            $chk = $pdo->prepare('SELECT COUNT(*) FROM devices WHERE id = ?');
+            $chk->execute([$deviceId]);
+            if ((int)$chk->fetchColumn() === 0) {
+                respond(['success' => false, 'error' => 'device_id no existe'], 400);
+            }
+
             $stmt = $pdo->prepare('
                 INSERT INTO sensors 
                   (device_id, name, port, variable, icon) 
@@ -59,7 +75,11 @@ try {
                 'variable'  => $variable,
                 'icon'      => $icon,
             ]);
-            respond(['success' => true, 'id' => (int)$pdo->lastInsertId()], 201);
+
+            respond([
+                'success' => true,
+                'id'      => (int)$pdo->lastInsertId()
+            ], 201);
             break;
 
         case 'edit':
@@ -72,9 +92,17 @@ try {
             $port     = trim($_POST['sensorPort']  ?? '');
             $variable = trim($_POST['sensorVar']   ?? '');
             $icon     = trim($_POST['sensorIcon']  ?? '');
-            if (!$id || !$deviceId || !$name) {
+            if (!$id || !$deviceId || !$name || !$port || !$variable || !$icon) {
                 respond(['success' => false, 'error' => 'Faltan datos'], 400);
             }
+
+            // Verificar existencia de device_id
+            $chk = $pdo->prepare('SELECT COUNT(*) FROM devices WHERE id = ?');
+            $chk->execute([$deviceId]);
+            if ((int)$chk->fetchColumn() === 0) {
+                respond(['success' => false, 'error' => 'device_id no existe'], 400);
+            }
+
             $stmt = $pdo->prepare('
                 UPDATE sensors SET
                   device_id = :device_id,
@@ -100,7 +128,7 @@ try {
                 respond(['success' => false, 'error' => 'Método no permitido'], 405);
             }
             $id = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT)
-                ?: filter_input(INPUT_GET,  'id', FILTER_VALIDATE_INT);
+                ?: filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
             if (!$id) {
                 respond(['success' => false, 'error' => 'ID inválido'], 400);
             }
@@ -113,6 +141,7 @@ try {
             respond(['success' => false, 'error' => 'Acción no válida'], 400);
     }
 } catch (PDOException $e) {
+    // Retornar mensaje detallado de BD para depuración
     respond(['success' => false, 'error' => 'Error de BD: ' . $e->getMessage()], 500);
 } catch (Exception $e) {
     respond(['success' => false, 'error' => $e->getMessage()], 500);

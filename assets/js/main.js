@@ -1,6 +1,10 @@
 // assets/js/main.js
 
 document.addEventListener('DOMContentLoaded', () => {
+
+  const deviceIdInput   = document.getElementById('deviceId');
+  const currentDeviceId = deviceIdInput ? deviceIdInput.value : null;
+
   // — Sidebar / Drawer references —
   const logo         = document.getElementById('logo');
   const sidebar      = document.getElementById('sidebar');
@@ -11,23 +15,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // — Sidebar vs Drawer toggle —
   logo.addEventListener('click', () => {
     if (window.innerWidth <= 768) {
-      // en móvil clic al logo abre/cierra el drawer
       mobileDrawer.classList.toggle('open');
     } else {
-      // en escritorio colapsa el sidebar
       sidebar.classList.toggle('collapsed');
       mainContent.classList.toggle('expanded');
     }
   });
 
-  // — Mobile drawer toggle con hamburguesa —
   if (hamburger && mobileDrawer) {
     hamburger.addEventListener('click', () => {
       mobileDrawer.classList.toggle('open');
     });
   }
-
-
 
   // --- Menu navigation ---
   document.querySelectorAll('.sidebar .menu li').forEach(item => {
@@ -56,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     localStorage.setItem('theme', darkMode ? 'dark' : 'light');
     applyTheme(darkMode);
   });
-  // También en drawer móvil
+
   const themeIconDrawer = document.getElementById('themeToggleDrawer');
   if (themeIconDrawer) {
     themeIconDrawer.addEventListener('click', () => {
@@ -71,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('notifToggle').addEventListener('click', () =>
     Swal.fire('Notificaciones', 'No hay nuevas notificaciones.', 'info')
   );
-  // drawer
+
   const langDrawer  = document.getElementById('langToggleDrawer');
   const notifDrawer = document.getElementById('notifToggleDrawer');
   if (langDrawer)  langDrawer .addEventListener('click', () => document.getElementById('langToggle').click());
@@ -89,33 +88,89 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 10000);
   }
 
-  // --- Utilitario aleatorio ---
   function rand(min, max, decimals = 2) {
     return (Math.random() * (max - min) + min).toFixed(decimals);
   }
 
-  // --- Simulación sensores ---
-async function updateSensors() {
-  try {
-    const res = await fetch(
-      `${BASE_PATH}/app/get_latest.php?deviceId=${currentDeviceId}`
-    );
-    if (!res.ok) throw '';
-    const list = await res.json();
-    list.forEach(s => {
-      let id = s.sensor_type==='tempHum' ? 'tempVal' : s.sensor_type+'Val';
-      // para hum de tempHum:
-      if (s.sensor_type==='tempHum' && s.unit==='%') id = 'humVal';
-      const el = document.getElementById(id);
-      if (el) el.textContent = s.value;
-    });
-  } catch {
-    console.warn('No hay datos reales todavía');
-  }
-}
+  // --- SENSORES SEGUROS ---
+  async function updateSensors() {
+    try {
+      const res = await fetch(`${BASE_PATH}/app/get_latest.php?deviceId=${currentDeviceId}`);
+      if (!res.ok) throw new Error(`Error HTTP ${res.status}`);
+      const list = await res.json();
+      if (!Array.isArray(list)) throw new Error('Formato de datos inválido');
 
-updateSensors();
-setInterval(updateSensors, 5000);
+      list.forEach(s => {
+        if (!s || typeof s !== 'object' || !s.sensor_type || s.value === undefined) return;
+
+        if (s.sensor_type === 'tempHum') {
+          const tempEl = document.getElementById('tempVal');
+          const humEl  = document.getElementById('humVal');
+          if (typeof s.value === 'string') {
+            try {
+              const obj = JSON.parse(s.value);
+              if ('temp' in obj && tempEl) tempEl.textContent = obj.temp;
+              if ('hum'  in obj && humEl)  humEl.textContent  = obj.hum;
+            } catch (e) {
+              console.warn('tempHum inválido:', s.value);
+            }
+          }
+        }
+
+        else if (s.sensor_type === 'mq135') {
+          if (typeof s.value === 'string') {
+            try {
+              const obj = JSON.parse(s.value);
+              const map = {
+                co2:     'co2Val',
+                methane: 'methaneVal',
+                butane:  'butaneVal',
+                propane: 'propaneVal'
+              };
+              Object.entries(map).forEach(([key, id]) => {
+                if (obj[key] !== undefined) {
+                  const el = document.getElementById(id);
+                  if (el) el.textContent = obj[key];
+                }
+              });
+            } catch (e) {
+              console.warn('mq135 inválido:', s.value);
+            }
+          }
+        }
+
+        else {
+          const idMap = {
+            soilHum: 'soilHumVal',
+            ph:      'phVal',
+            ec:      'ecVal',
+            h2o:     'h2oVal',
+            nafta:   'naftaVal',
+            aceite:  'aceiteVal'
+          };
+          const id = idMap[s.sensor_type];
+          if (id) {
+            const el = document.getElementById(id);
+            if (el) el.textContent = s.value;
+          }
+        }
+      });
+    } catch (err) {
+      console.warn('❌ Error al actualizar sensores:', err);
+      Swal.fire({
+        icon: 'error',
+        title: 'Error al cargar sensores',
+        text: 'No se pudo obtener la información. Revisa la conexión.',
+        toast: true,
+        timer: 4000,
+        position: 'top-end',
+        showConfirmButton: false
+      });
+    }
+  }
+
+  updateSensors();
+  setInterval(updateSensors, 5000);
 
   // --- Historial de reinicios ---
   let rebootHistory = JSON.parse(localStorage.getItem('rebootHistory') || 'null');
@@ -172,6 +227,7 @@ setInterval(updateSensors, 5000);
     actuatorLogs = { A1: [], A2: [], A3: [], A4: [] };
     localStorage.setItem('actuatorLogs', JSON.stringify(actuatorLogs));
   }
+
   document.querySelectorAll('.actuators input[type=checkbox]').forEach(cb => {
     const id   = cb.dataset.device;
     const logs = actuatorLogs[id] || [];
@@ -237,176 +293,4 @@ setInterval(updateSensors, 5000);
     });
   });
 
-  // --- Gráficos sensores ---
-  const fechaInput = document.getElementById('fecha');
-  if (fechaInput) {
-    fechaInput.value = new Date().toISOString().slice(0,10);
-    function genSeries(min, max, dec) {
-      const labels = [], data = [];
-      for (let h = 0; h < 24; h++) {
-        labels.push(`${h}:00`);
-        data.push(parseFloat(rand(min, max, dec)));
-      }
-      return { labels, data };
-    }
-    const ctxDHT  = document.getElementById('chartDHT')?.getContext('2d');
-    const ctxMQ   = document.getElementById('chartMQ135')?.getContext('2d');
-    const ctxPHec= document.getElementById('chartPHec')?.getContext('2d');
-    if (ctxDHT && ctxMQ && ctxPHec) {
-      const dht = genSeries(15,35,2),
-            mq  = genSeries(300,2000,0),
-            ph  = genSeries(4.0,9.0,2),
-            ec  = genSeries(500,2000,0).data;
-      const chartDHT = new Chart(ctxDHT, {
-        type: 'line',
-        data: { labels: dht.labels, datasets: [
-          { label:'Temp (°C)', data:dht.data, fill:false },
-          { label:'Hum (%)',   data:genSeries(20,80,2).data, fill:false }
-        ]},
-        options:{ responsive:true }
-      });
-      const chartMQ = new Chart(ctxMQ, {
-        type: 'line',
-        data: { labels: mq.labels, datasets: [
-          { label:'CO₂ (ppm)',    data:mq.data, fill:false },
-          { label:'Metano (ppm)', data:genSeries(0,200,0).data, fill:false },
-          { label:'Butano (ppm)', data:genSeries(0,200,0).data, fill:false },
-          { label:'Propano (ppm)',data:genSeries(0,200,0).data, fill:false }
-        ]},
-        options:{ responsive:true }
-      });
-      const chartPH = new Chart(ctxPHec, {
-        type: 'line',
-        data: { labels: ph.labels, datasets: [
-          { label:'pH',        data:ph.data, fill:false },
-          { label:'EC (μS/cm)',data:ec,     fill:false }
-        ]},
-        options:{ responsive:true }
-      });
-      fechaInput.addEventListener('change', () => {
-        const ndht = genSeries(15,35,2),
-              nmq  = genSeries(300,2000,0),
-              nph  = genSeries(4.0,9.0,2),
-              nec  = genSeries(500,2000,0).data;
-        chartDHT.data.labels = ndht.labels;
-        chartDHT.data.datasets[0].data = ndht.data;
-        chartDHT.data.datasets[1].data = genSeries(20,80,2).data;
-        chartDHT.update();
-        chartMQ.data.labels = nmq.labels;
-        chartMQ.data.datasets[0].data = nmq.data;
-        chartMQ.data.datasets[1].data = genSeries(0,200,0).data;
-        chartMQ.data.datasets[2].data = genSeries(0,200,0).data;
-        chartMQ.data.datasets[3].data = genSeries(0,200,0).data;
-        chartMQ.update();
-        chartPH.data.labels = nph.labels;
-        chartPH.data.datasets[0].data = nph.data;
-        chartPH.data.datasets[1].data = nec;
-        chartPH.update();
-      });
-    }
-  }
-
-  // --- Popups de gráfico de widget ---
-  document.querySelectorAll('.chart-icon').forEach(icon => {
-    icon.addEventListener('click', () => {
-      Swal.fire({
-        title: `Gráfico ${icon.dataset.sensor}`,
-        html: `
-          <div style="text-align:left; margin-bottom:1rem;">
-            <label for="modalDate">Fecha:</label>
-            <input type="date" id="modalDate" class="swal2-input" style="width:auto;"
-                   value="${new Date().toISOString().slice(0,10)}">
-          </div>
-          <canvas id="modalChart" width="600" height="400"></canvas>
-        `,
-        width: '650px',
-        showCloseButton: true,
-        didOpen: () => {
-          const popup     = Swal.getPopup();
-          const modalDate = popup.querySelector('#modalDate');
-          const ctx       = popup.querySelector('#modalChart').getContext('2d');
-          const sensor    = icon.dataset.sensor;
-
-          function generateData(date) {
-            const labels = Array.from({length:24}, (_,h) => `${h}:00`);
-            const rnd    = (min, max, dec=2) => +(Math.random()*(max-min)+min).toFixed(dec);
-            let datasets;
-            if (sensor === 'DHT22') {
-              datasets = [
-                { label:'Temp (°C)', data: labels.map(()=> rnd(15,35,2)), fill:false },
-                { label:'Hum (%)',   data: labels.map(()=> rnd(20,80,2)), fill:false }
-              ];
-            } else if (sensor === 'MQ1325') {
-              datasets = [
-                { label:'CO₂',     data: labels.map(()=> rnd(300,2000,0)), fill:false },
-                { label:'Metano',  data: labels.map(()=> rnd(0,200,0)),    fill:false },
-                { label:'Butano',  data: labels.map(()=> rnd(0,200,0)),    fill:false },
-                { label:'Propano', data: labels.map(()=> rnd(0,200,0)),    fill:false }
-              ];
-            } else if (sensor === 'pH') {
-              datasets = [
-                { label:'pH',        data: labels.map(()=> rnd(4.0,9.0,2)), fill:false }
-              ];
-            } else if (sensor === 'EC') {
-              datasets = [
-                { label:'EC (μS/cm)',data: labels.map(()=> rnd(200,2000,0)), fill:false }
-              ];
-            } else {
-              datasets = [{ label:sensor, data: labels.map(()=> rnd(0,100,0)), fill:false }];
-            }
-            return { labels, datasets };
-          }
-
-          let { labels, datasets } = generateData(modalDate.value);
-          const modalChart = new Chart(ctx, {
-            type:'line',
-            data:{ labels, datasets },
-            options:{ responsive:true, animation:{ duration:0 } }
-          });
-
-          const today = new Date().toISOString().slice(0,10);
-          let intervalId = null;
-          if (modalDate.value === today) {
-            intervalId = setInterval(() => {
-              const now     = new Date().toLocaleString('en-US', { timeZone:'America/Argentina/Tucuman' });
-              const hour    = new Date(now).getHours();
-              const minute  = String(new Date(now).getMinutes()).padStart(2,'0');
-              const label   = `${hour}:${minute}`;
-              modalChart.data.labels.push(label);
-              modalChart.data.labels.shift();
-              modalChart.data.datasets.forEach(ds => {
-                let v;
-                if (ds.label.includes('Temp'))    v = +rand(15,35,2);
-                else if (ds.label.includes('Hum')) v = +rand(20,80,2);
-                else if (ds.label === 'CO₂')      v = Math.round(rand(300,2000,0));
-                else if (ds.label === 'Metano')   v = Math.round(rand(0,200,0));
-                else if (ds.label === 'Butano')   v = Math.round(rand(0,200,0));
-                else if (ds.label === 'Propano')  v = Math.round(rand(0,200,0));
-                else if (ds.label === 'pH')       v = +rand(4.0,9.0,2);
-                else if (ds.label.includes('EC'))  v = Math.round(rand(200,2000,0));
-                else                                v = +rand(0,100,0);
-                ds.data.push(v);
-                ds.data.shift();
-              });
-              modalChart.update();
-            }, 1000);
-          }
-
-          modalDate.addEventListener('change', e => {
-            const d = generateData(e.target.value);
-            modalChart.data.labels   = d.labels;
-            modalChart.data.datasets = d.datasets;
-            modalChart.update();
-            if (intervalId) clearInterval(intervalId);
-          });
-
-          Swal.getPopup().addEventListener('click', e => {
-            if (e.target.classList.contains('swal2-close') && intervalId) {
-              clearInterval(intervalId);
-            }
-          });
-        }
-      });
-    });
-  });
 });

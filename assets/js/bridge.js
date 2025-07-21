@@ -1,4 +1,4 @@
-// bridge.js
+// bridge.js corregido
 const mqtt  = require('mqtt');
 const mysql = require('mysql2/promise');
 
@@ -9,40 +9,62 @@ const mysql = require('mysql2/promise');
     database: 'medtuciot'
   });
 
-  // Mapea cada variable a su unidad
-  const unitMap = {
-    tempHum: '%',    // humedad; temperatura asumimos °C en front
-    co2:     'ppm',
+  // Mapas de unidades para cada subtipo de datos JSON y para valores simples
+  const unitMapJson = {
+    temp: '°C',
+    hum: '%',
+    co2: 'ppm',
+    methane: 'ppm',
+    butane: 'ppm',
+    propane: 'ppm'
+  };
+
+  const unitMapSimple = {
     soilHum: '%',
-    ph:      '',
-    ec:      'μS/cm',
-    h2o:     '%',
-    nafta:   '%',
-    aceite:  '%',
-    sLDR:    ''      // si no hay unidad
+    ph: '',
+    ec: 'μS/cm',
+    h2o: '%',
+    nafta: '%',
+    aceite: '%',
+    sLDR: ''
   };
 
   const client = mqtt.connect('mqtt://broker.emqx.io:1883');
 
   client.on('connect', () => {
     client.subscribe('medtucIoT/+/+');
+    console.log('MQTT conectado y suscrito a medtucIoT/+/+');
   });
 
   client.on('message', async (topic, msg) => {
     try {
-      // topic = medtucIoT/{deviceId}/{variable}
       const [, deviceId, variable] = topic.split('/');
-      const data = JSON.parse(msg.toString());
-      const unit = unitMap[variable] ?? '';
+      const payload = msg.toString();
 
-      // Inserta cada par clave→valor como fila en sensor_data
-      for (let key in data) {
-        const v = parseFloat(data[key]);
+      // Detectar si es JSON compuesto o valor simple
+      if (payload.startsWith('{') && payload.endsWith('}')) {
+        // JSON compuesto (tempHum, mq135)
+        const data = JSON.parse(payload);
+        for (let key in data) {
+          const val = parseFloat(data[key]);
+          const unit = unitMapJson[key] ?? '';
+          await db.execute(
+            'INSERT INTO sensor_data (device_id, sensor_type, value, unit) VALUES (?, ?, ?, ?)',
+            [deviceId, key, val, unit]
+          );
+        }
+      } else {
+        // Valor simple (soilHum, ph, etc.)
+        const val = parseFloat(payload);
+        const unit = unitMapSimple[variable] ?? '';
         await db.execute(
-          'INSERT INTO sensor_data (device_id,sensor_type,value,unit) VALUES (?,?,?,?)',
-          [deviceId, variable, v, unit]
+          'INSERT INTO sensor_data (device_id, sensor_type, value, unit) VALUES (?, ?, ?, ?)',
+          [deviceId, variable, val, unit]
         );
       }
+
+      console.log(`Dato insertado: ${topic} → ${payload}`);
+
     } catch (err) {
       console.error('MQTT → DB error:', err);
     }
