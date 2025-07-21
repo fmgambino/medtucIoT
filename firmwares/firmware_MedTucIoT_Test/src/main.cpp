@@ -77,15 +77,21 @@ void mqttReconnect() {
 // --- PUBLICAR TEMP+HUM EN JSON ---
 void publishTempHum() {
   StaticJsonDocument<64> doc;
-  doc["temp"] = rndf(sensors[0].min, sensors[0].max, sensors[0].dec);
-  doc["hum"]  = rndf(sensors[0].min, sensors[0].max, sensors[0].dec);
+
+  float tempVal = rndf(20.0, 35.0, 1);
+  float humVal  = rndf(40.0, 80.0, 1);
+
+  doc["temperature"] = tempVal;
+  doc["humidity"]    = humVal;
+
   char buf[64];
   size_t n = serializeJson(doc, buf);
   char topic[64];
-  snprintf(topic, sizeof(topic), "%s%s/%s", TOPIC_BASE, DEVICE_ID, sensors[0].suffix);
+  snprintf(topic, sizeof(topic), "%s%s/tempHum", TOPIC_BASE, DEVICE_ID);
   mqtt.publish(topic, buf, n);
   Serial.printf("📡 tempHum → %s\n", buf);
 }
+
 
 // --- PUBLICAR MQ135 (CO₂, METANO, BUTANO, PROPANO) EN JSON ---
 void publishMQ135() {
@@ -97,7 +103,7 @@ void publishMQ135() {
   char buf[128];
   size_t n = serializeJson(doc, buf);
   char topic[64];
-  snprintf(topic, sizeof(topic), "%s%s/%s", TOPIC_BASE, DEVICE_ID, sensors[1].suffix);
+  snprintf(topic, sizeof(topic), "%s%s/mq135", TOPIC_BASE, DEVICE_ID);
   mqtt.publish(topic, buf, n);
   Serial.printf("📡 mq135 → %s\n", buf);
 }

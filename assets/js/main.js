@@ -91,14 +91,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
       list.forEach(s => {
         if (s.sensor_type === 'tempHum') {
-          try {
-            const parsed = typeof s.value === 'string' ? JSON.parse(s.value) : s.value;
-            if (parsed?.temp) document.getElementById('tempVal').textContent = parsed.temp;
-            if (parsed?.hum)  document.getElementById('humVal').textContent  = parsed.hum;
-          } catch (e) {
-            console.warn('Error parseando tempHum:', s.value);
-          }
-        }
+  try {
+    const parsed = typeof s.value === 'string' ? JSON.parse(s.value) : s.value;
+    if (parsed?.temperature !== undefined)
+      document.getElementById('tempVal').textContent = parsed.temperature;
+    if (parsed?.humidity !== undefined)
+      document.getElementById('humVal').textContent = parsed.humidity;
+  } catch (e) {
+    console.warn('Error parseando tempHum:', s.value);
+  }
+}
+
         else if (s.sensor_type === 'mq135') {
           try {
             const parsed = typeof s.value === 'string' ? JSON.parse(s.value) : s.value;
