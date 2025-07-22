@@ -1,5 +1,5 @@
 <?php
-// /medtuciot/app/config.php
+// /app/config.php
 
 // ----------------------
 // 1) Detectar entorno y definir BASE_PATH automáticamente
@@ -12,7 +12,7 @@ if ($isLocal) {
     defined('BASE_PATH') || define('BASE_PATH', '/medtucIoT/');
 } else {
     // Producción (Hostinger - subdominio apunta al root del proyecto)
-    define('BASE_PATH', '/');
+    defined('BASE_PATH') || define('BASE_PATH', '/');
 }
 
 // ----------------------
@@ -21,7 +21,7 @@ if ($isLocal) {
 if ($isLocal) {
     // Entorno local (XAMPP)
     $dbHost = '127.0.0.1';
-    $dbName = 'medtuciot';    // debe coincidir con tu base de datos local
+    $dbName = 'medtuciot';
     $dbUser = 'root';
     $dbPass = '';
 } else {
@@ -47,6 +47,5 @@ try {
         ]
     );
 } catch (PDOException $e) {
-    // En producción puedes registrar el error en un log
     die("Error de conexión a la base de datos: " . $e->getMessage());
 }
