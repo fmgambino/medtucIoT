@@ -1,35 +1,19 @@
 <?php
-// /medtuciot/app/get_latest.php
-declare(strict_types=1);
-session_start();
+require_once 'config.php';
+header('Content-Type: application/json');
 
-require_once __DIR__ . '/config.php';
-
-header('Content-Type: application/json; charset=utf-8');
-
-// Verificación de sesión obligatoria
-if (!isset($_SESSION['user_id'])) {
-  http_response_code(403);
-  echo json_encode(['success' => false, 'error' => 'No autorizado']);
-  exit;
-}
-
-// Validación de parámetro
-if (!isset($_GET['deviceId']) || !is_numeric($_GET['deviceId'])) {
+if (!isset($_GET['deviceId'])) {
   http_response_code(400);
-  echo json_encode(['success' => false, 'error' => 'Falta o es inválido el parámetro deviceId']);
+  echo json_encode(['error' => 'Falta el parámetro deviceId']);
   exit;
 }
 
 $deviceId = (int) $_GET['deviceId'];
 
 try {
-  // Asegurarse que PDO lanza excepciones
-  $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
   $result = [];
 
-  // Obtener datos del último día
+  // Consulta todo el sensor_data reciente
   $stmt = $pdo->prepare("
     SELECT sensor_type, value, unit, timestamp
     FROM sensor_data
@@ -48,7 +32,7 @@ try {
     }
   }
 
-  // Agrupar temp + hum como tempHum
+  // Agrupar temp + hum => tempHum
   $temp = $latest['temp']['value'] ?? null;
   $hum  = $latest['hum']['value']  ?? null;
   if ($temp !== null || $hum !== null) {
@@ -75,7 +59,7 @@ try {
     ];
   }
 
-  // Agregar el resto de sensores
+  // El resto de sensores
   foreach ($latest as $row) {
     $result[] = [
       'sensor_type' => $row['sensor_type'],
@@ -85,9 +69,9 @@ try {
     ];
   }
 
-  echo json_encode(['success' => true, 'data' => $result], JSON_UNESCAPED_UNICODE);
+  echo json_encode($result);
 
 } catch (Exception $e) {
   http_response_code(500);
-  echo json_encode(['success' => false, 'error' => 'Error en servidor: ' . $e->getMessage()]);
+  echo json_encode(['error' => 'Error en servidor: ' . $e->getMessage()]);
 }
