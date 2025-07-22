@@ -1,32 +1,35 @@
 # +--------------------------------------------------+
-# | .htaccess para entorno local o producción        |
-# | Colócalo en la carpeta raíz de /medtuciot        |
+# | .htaccess universal para entorno local y Hostinger |
+# | Colócalo en la raíz del proyecto                 |
 # +--------------------------------------------------+
 
-# 1) Activa mod_rewrite
+# 1) Activar mod_rewrite
 RewriteEngine On
 
-# 2) Base de las URLs — tu subcarpeta en XAMPP
-RewriteBase /medtuciot/
+# 2) Detectar si estás en subcarpeta (XAMPP) o raíz (Hostinger)
+#    Nota: No es necesario usar RewriteBase si no es obligatorio.
+RewriteCond %{REQUEST_URI} ^/medtucIoT(/.*)?$
+RewriteBase /medtucIoT/
+# Si estás en producción (root del subdominio), no usar RewriteBase
+RewriteCond %{REQUEST_URI} !^/medtucIoT
+RewriteBase /
 
-# 3) Redirige la raíz (/) a /login
+# 3) Redirigir raíz (/) a login (solo si accede al index)
 RewriteRule ^$ login [L,R=302]
 
-# 4) Rutas amigables → apuntan a tus scripts en /app/
+# 4) Rutas amigables → scripts en /app/
 RewriteRule ^login/?$      app/login.php     [L,QSA]
 RewriteRule ^register/?$   app/register.php  [L,QSA]
 RewriteRule ^dashboard/?$  app/dashboard.php [L,QSA]
 RewriteRule ^logout/?$     app/logout.php    [L,QSA]
+RewriteRule ^sensor/?$     app/sensor.php    [L,QSA]
+RewriteRule ^get_latest/?$ app/get_latest.php [L,QSA]
+RewriteRule ^get_history/?$ app/get_history.php [L,QSA]
 
-# 5) Redirecciones 301 de viejas .html (si tenías .html antiguas)
-RedirectMatch 301 ^/medtuciot/login\.html$    /medtuciot/login
-RedirectMatch 301 ^/medtuciot/register\.html$ /medtuciot/register
-
-# 6) Bloquear accesos directos vía navegador a /app/*.php 
-#    (excepto logout.php para que siga funcionando)
+# 5) Bloquear accesos directos vía navegador a /app/*.php (excepto logout)
 RewriteCond %{THE_REQUEST} \s/app/.*\.php [NC]
 RewriteCond %{THE_REQUEST} \s/app/(?!logout\.php).*\.php [NC]
 RewriteRule ^app/.*\.php$ - [F]
 
-# 7) Deshabilitar listado de directorios
+# 6) Deshabilitar listado de directorios
 Options -Indexes
