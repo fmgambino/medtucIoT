@@ -52,6 +52,11 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  // ⏰ Ajuste de zona horaria local de Tucumán
+function toTucumanTime(timestamp) {
+  return new Date(new Date(timestamp).toLocaleString("en-US", { timeZone: "America/Argentina/Tucuman" }));
+}
+
   async function loadChart(cfg) {
     if (!cfg.chart || !currentDeviceId) return;
     const date = fechaInput ? fechaInput.value : today;
