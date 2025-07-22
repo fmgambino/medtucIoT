@@ -1,67 +1,73 @@
 <?php
 // /medtuciot/app/get_history.php
-declare(strict_types=1);
-session_start();
-
+header('Content-Type: application/json; charset=utf-8');
 require __DIR__ . '/config.php';
 
-header('Content-Type: application/json; charset=utf-8');
-
-// Validación de sesión
-if (!isset($_SESSION['user_id'])) {
-    http_response_code(403);
-    echo json_encode(['success' => false, 'error' => 'No autorizado']);
-    exit;
-}
-
-// Validación de parámetros
-$deviceId   = filter_input(INPUT_GET, 'deviceId', FILTER_VALIDATE_INT);
-$sensorType = filter_input(INPUT_GET, 'sensorType', FILTER_SANITIZE_STRING);
-$date       = filter_input(INPUT_GET, 'date', FILTER_SANITIZE_STRING) ?: date('Y-m-d');
-
-if (!$deviceId || !$sensorType || !preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Parámetros inválidos']);
-    exit;
-}
-
-// Sensores con múltiples valores en campo JSON
-$compositeSensors = ['tempHum', 'mq135'];
-
+// 🛠️ Agregar conexión PDO
 try {
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    // Consulta según si es sensor compuesto
-    $sql = "
-        SELECT
-          sensor_type,
-          value,
-          " . (in_array($sensorType, $compositeSensors) ? "'' AS unit" : "unit") . ",
-          timestamp
-        FROM sensor_data
-        WHERE device_id = :device_id
-          AND sensor_type = :sensor_type
-          AND DATE(timestamp) = :date
-        ORDER BY timestamp ASC
-    ";
-
-    $stmt = $pdo->prepare($sql);
-    $stmt->execute([
-        'device_id'   => $deviceId,
-        'sensor_type' => $sensorType,
-        'date'        => $date
+    $pdo = new PDO("mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4", $dbUser, $dbPass, [
+        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
     ]);
-
-    $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // Enviar datos
-    echo json_encode([
-        'success' => true,
-        'count'   => count($rows),
-        'data'    => $rows
-    ], JSON_UNESCAPED_UNICODE);
-
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Error de base de datos: ' . $e->getMessage()]);
+    echo json_encode(['error' => 'Error de conexión a la base de datos']);
+    exit;
 }
+
+// Leer y validar parámetros
+$deviceId   = filter_input(INPUT_GET,  'deviceId',   FILTER_SANITIZE_STRING);
+$sensorType = filter_input(INPUT_GET,  'sensorType', FILTER_SANITIZE_STRING);
+$date       = filter_input(INPUT_GET,  'date',       FILTER_SANITIZE_STRING) ?: date('Y-m-d');
+
+if (!$deviceId || !$sensorType) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Parámetros inválidos']);
+    exit;
+}
+
+// Lista de sensores que guardan JSON compuesto en el campo 'value'
+$compositeSensors = ['tempHum', 'mq135'];
+
+// Query dinámica según tipo de sensor
+if (in_array($sensorType, $compositeSensors)) {
+    $sql = "
+      SELECT
+        sensor_type,
+        value,
+        '' AS unit,
+        timestamp
+      FROM sensor_data
+      WHERE device_id = :device_id
+        AND sensor_type = :sensor_type
+        AND DATE(timestamp) = :date
+      ORDER BY timestamp ASC
+    ";
+} else {
+    $sql = "
+      SELECT
+        sensor_type,
+        value,
+        unit,
+        timestamp
+      FROM sensor_data
+      WHERE device_id = :device_id
+        AND sensor_type = :sensor_type
+        AND DATE(timestamp) = :date
+      ORDER BY timestamp ASC
+    ";
+}
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute([
+    'device_id'   => $deviceId,
+    'sensor_type' => $sensorType,
+    'date'        => $date
+]);
+
+$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// 🧪 Log útil para debug si falla en frontend
+error_log("get_history.php → deviceId=$deviceId, sensorType=$sensorType, count=" . count($rows));
+
+// Enviar datos al frontend
+echo json_encode($rows, JSON_UNESCAPED_UNICODE);
