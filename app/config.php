@@ -27,9 +27,9 @@ if ($isLocal) {
 } else {
     // Producción (Hostinger)
     $dbHost = 'localhost';
-    $dbName = 'u197809344_pwa';
-    $dbUser = 'u197809344_spv5';
-    $dbPass = 'Jamboree0342$$';
+    $dbName = 'u197809344_medtuciot';
+    $dbUser = 'u197809344_fmgiot';
+    $dbPass = 'Jamboree0381$$';
 }
 
 // ----------------------
