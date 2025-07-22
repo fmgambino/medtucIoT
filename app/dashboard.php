@@ -189,7 +189,7 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
   <!-- drawer móvil oculto -->
   <div class="mobile-drawer" id="mobileDrawer">
     <div class="mobile-drawer-header">
-      <img src="<?= BASE_PATH ?>/assets/img/logo-small.png" alt="Logo" class="logo" />
+      <img src="<?= BASE_PATH ?>assets/img/logo-small.png" alt="Logo" class="logo" />
     </div>
     <i id="themeToggleDrawer" class="ri-sun-line icon-btn" title="Modo claro/oscuro"></i>
     <i id="langToggleDrawer"  class="ri-earth-line icon-btn"  title="ES/EN"></i>
@@ -197,7 +197,7 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
     <!-- dentro de .topbar-right -->
 
 
-    <a href="<?= BASE_PATH ?>/logout" class="icon-btn" title="Salir"><i class="ri-logout-box-line"></i></a>
+    <a href="<?= BASE_PATH ?>logout" class="icon-btn" title="Salir"><i class="ri-logout-box-line"></i></a>
   </div>
   
 
@@ -234,7 +234,7 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
       <!-- Topbar -->
       <header class="topbar">
         <div class="topbar-left">
-          <img src="<?= BASE_PATH ?>/assets/img/logo.png" id="logo" class="logo" alt="Logo">
+          <img src="<?= BASE_PATH ?>assets/img/logo.png" id="logo" class="logo" alt="Logo">
           <select id="placeSelect" onchange="onPlaceChange()">
             <?php foreach ($places as $p): ?>
               <option value="<?= $p['id'] ?>" <?= $p['id'] == $selected_place ? 'selected' : '' ?>>
@@ -260,8 +260,7 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
     <span></span><span></span><span></span>
   </button>
 
-  <img src="<?= BASE_PATH ?>/uploads/<?= htmlspecialchars($user['profile_image'], ENT_QUOTES) ?>"
-       class="profile-img icon-btn" alt="Perfil">
+  <img src="<?= BASE_PATH ?>/uploads/<?= htmlspecialchars($user_img, ENT_QUOTES) ?>"       class="profile-img icon-btn" alt="Perfil">
   <a href="<?= BASE_PATH ?>/logout" class="icon-btn"><i class="ri-logout-box-line"></i></a>
 </div>
 
