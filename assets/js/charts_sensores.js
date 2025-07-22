@@ -92,16 +92,15 @@ document.addEventListener('DOMContentLoaded', () => {
       if (cfg.sensorType === 'tempHum') {
         try {
           const parsed = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
-          if (parsed?.temperature !== undefined && parsed?.humidity !== undefined) {
+          if (parsed?.temp != null || parsed?.hum != null) {
             labels.push(hhmm);
-            series[0].push(parsed.temperature);
-            series[1].push(parsed.humidity);
+            series[0].push(parsed?.temp ?? null);
+            series[1].push(parsed?.hum ?? null);
           }
         } catch (e) {
           console.warn('❌ Error al parsear tempHum:', item.value);
         }
       }
-
       else if (cfg.sensorType === 'mq135') {
         try {
           const parsed = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
@@ -116,7 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
           console.warn('❌ Error al parsear mq135:', item.value);
         }
       }
-
       else if (cfg.sensorTypes) {
         const i = cfg.sensorTypes.indexOf(item.sensor_type);
         if (i >= 0) {
@@ -209,8 +207,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 data.forEach(i => {
                   try {
                     const parsed = typeof i.value === 'string' ? JSON.parse(i.value) : i.value;
-                    t.push(parsed?.temperature ?? null);
-                    h.push(parsed?.humidity ?? null);
+                    t.push(parsed?.temp ?? null);
+                    h.push(parsed?.hum ?? null);
                   } catch(e) {
                     console.warn('Error parseando tempHum en popup:', i.value);
                   }
@@ -230,14 +228,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     console.warn('Error parseando mq135 en popup:', i.value);
                   }
                 });
-                series = [co2, me, bu, pr];
+                series = [co2,me,bu,pr];
               }
               else {
                 series = [ data.map(i=>i.value) ];
               }
 
               chartPopup.data.labels = labels;
-              chartPopup.data.datasets.forEach((ds,i)=> ds.data = series[i] || []);
+              chartPopup.data.datasets.forEach((ds,i)=> ds.data = series[i]||[]);
               chartPopup.update();
             }
             catch(e){ console.error(e); }
@@ -246,9 +244,9 @@ document.addEventListener('DOMContentLoaded', () => {
           await loadPopup();
           let iv = null;
           if (dateInput.value === today) {
-            iv = setInterval(loadPopup, 5000);
+            iv = setInterval(loadPopup,5000);
           }
-          dateInput.addEventListener('change', ()=> {
+          dateInput.addEventListener('change',()=> {
             if (iv) clearInterval(iv);
             loadPopup();
           });
