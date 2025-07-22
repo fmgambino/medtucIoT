@@ -2,15 +2,24 @@
 declare(strict_types=1);
 // /medtuciot/app/sensor.php
 
-// Mostrar errores de PHP (quítalo en producción)
+session_start();
+require __DIR__ . '/config.php';
+
+// Mostrar errores en entorno local (quitar en producción)
 ini_set('display_errors', '1');
 error_reporting(E_ALL);
 
+// Tipo de respuesta
 header('Content-Type: application/json; charset=utf-8');
 
-require __DIR__ . '/config.php';
+// Validar sesión
+if (!isset($_SESSION['user_id'])) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'No autorizado']);
+    exit;
+}
 
-// Asegurarnos de que PDO devuelva excepciones
+// Asegurar excepciones de PDO
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 $action = $_REQUEST['action'] ?? '';
@@ -34,8 +43,8 @@ try {
             }
             $stmt = $pdo->prepare(
                 'SELECT id, device_id, name, port, variable, icon 
-                   FROM sensors 
-                  WHERE id = ?'
+                 FROM sensors 
+                 WHERE id = ?'
             );
             $stmt->execute([$id]);
             $sensor = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -47,10 +56,11 @@ try {
                 respond(['success' => false, 'error' => 'Método no permitido'], 405);
             }
             $deviceId = filter_input(INPUT_POST, 'deviceId', FILTER_VALIDATE_INT);
-            $name     = trim($_POST['sensorName']  ?? '');
-            $port     = trim($_POST['sensorPort']  ?? '');
-            $variable = trim($_POST['sensorVar']   ?? '');
-            $icon     = trim($_POST['sensorIcon']  ?? '');
+            $name     = trim($_POST['sensorName'] ?? '');
+            $port     = trim($_POST['sensorPort'] ?? '');
+            $variable = trim($_POST['sensorVar'] ?? '');
+            $icon     = trim($_POST['sensorIcon'] ?? '');
+
             if (!$deviceId || !$name || !$port || !$variable || !$icon) {
                 respond(['success' => false, 'error' => 'Faltan datos'], 400);
             }
@@ -88,10 +98,11 @@ try {
             }
             $id       = filter_input(INPUT_POST, 'sensorId', FILTER_VALIDATE_INT);
             $deviceId = filter_input(INPUT_POST, 'deviceId', FILTER_VALIDATE_INT);
-            $name     = trim($_POST['sensorName']  ?? '');
-            $port     = trim($_POST['sensorPort']  ?? '');
-            $variable = trim($_POST['sensorVar']   ?? '');
-            $icon     = trim($_POST['sensorIcon']  ?? '');
+            $name     = trim($_POST['sensorName'] ?? '');
+            $port     = trim($_POST['sensorPort'] ?? '');
+            $variable = trim($_POST['sensorVar'] ?? '');
+            $icon     = trim($_POST['sensorIcon'] ?? '');
+
             if (!$id || !$deviceId || !$name || !$port || !$variable || !$icon) {
                 respond(['success' => false, 'error' => 'Faltan datos'], 400);
             }
@@ -141,7 +152,6 @@ try {
             respond(['success' => false, 'error' => 'Acción no válida'], 400);
     }
 } catch (PDOException $e) {
-    // Retornar mensaje detallado de BD para depuración
     respond(['success' => false, 'error' => 'Error de BD: ' . $e->getMessage()], 500);
 } catch (Exception $e) {
     respond(['success' => false, 'error' => $e->getMessage()], 500);
