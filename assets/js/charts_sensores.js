@@ -86,9 +86,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const series = cfg.datasets.map(()=> []);
 
     allData.forEach(item => {
-const dtLocal = new Date(new Date(item.timestamp).toLocaleString("en-US", { timeZone: "America/Argentina/Tucuman" }));
-const hhmm = `${String(dtLocal.getHours()).padStart(2, '0')}:${String(dtLocal.getMinutes()).padStart(2, '0')}`;
-
+      const dt   = new Date(item.timestamp);
+      const hhmm = `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
 
       if (cfg.sensorType === 'tempHum') {
         try {
