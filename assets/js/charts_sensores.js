@@ -138,126 +138,132 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  document.querySelectorAll('.chart-icon').forEach(icon => {
-    icon.addEventListener('click', () => {
-      const sensor = icon.dataset.sensor;
-      Swal.fire({
-        title: `Gráfico ${sensor}`,
-        html: `
-          <div style="text-align:left; margin-bottom:1rem;">
-            <label for="modalDate">Fecha:</label>
-            <input type="date" id="modalDate" class="swal2-input" style="width:auto;" value="${today}">
-          </div>
-          <canvas id="modalChart" width="600" height="400"></canvas>
-        `,
-        width:'650px',
-        showCloseButton:true,
-        didOpen: async () => {
-          const popup     = Swal.getPopup();
-          const dateInput = popup.querySelector('#modalDate');
-          const ctx       = popup.querySelector('#modalChart').getContext('2d');
-          let chartPopup;
+// ⏰ Ajuste de zona horaria para Tucumán
+function toTucumanTime(timestamp) {
+  return new Date(new Date(timestamp + 'Z').toLocaleString("en-US", {
+    timeZone: "America/Argentina/Buenos_Aires"
+  }));
+}
 
-          if (sensor === 'tempHum') {
-            chartPopup = new Chart(ctx, {
-              type:'line',
-              data:{ labels:[], datasets:[
-                { label:'Temp (°C)', data:[], fill:false },
-                { label:'Hum (%)',   data:[], fill:false }
-              ]},
-              options:{ responsive:true, animation:{ duration:0 } }
-            });
-          }
-          else if (sensor === 'mq135') {
-            chartPopup = new Chart(ctx, {
-              type:'line',
-              data:{ labels:[], datasets:[
-                { label:'CO₂ (ppm)',    data:[], fill:false },
-                { label:'Metano (ppm)', data:[], fill:false },
-                { label:'Butano (ppm)', data:[], fill:false },
-                { label:'Propano (ppm)',data:[], fill:false }
-              ]},
-              options:{ responsive:true, animation:{ duration:0 } }
-            });
-          }
-          else {
-            chartPopup = new Chart(ctx, {
-              type:'line',
-              data:{ labels:[], datasets:[
-                { label:sensor, data:[], fill:false }
-              ]},
-              options:{ responsive:true, animation:{ duration:0 } }
-            });
-          }
+// Abrir gráfico en modal (popup)
+document.querySelectorAll('.chart-icon').forEach(icon => {
+  icon.addEventListener('click', () => {
+    const sensor = icon.dataset.sensor;
+    if (!sensor) return;
 
-          async function loadPopup() {
-            try {
-              const res  = await fetch(
-                `${baseApi}/get_history.php?deviceId=${currentDeviceId}&sensorType=${sensor}&date=${dateInput.value}`
-              );
-              const data = await res.json();
-              data.sort((a,b)=> new Date(a.timestamp) - new Date(b.timestamp));
+    const today = new Date().toISOString().slice(0,10);
 
-              const labels = data.map(i => {
-                const dt = new Date(i.timestamp);
-                return `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+    Swal.fire({
+      title: `Gráfico ${sensor}`,
+      html: `
+        <div style="text-align:left; margin-bottom:1rem;">
+          <label for="modalDate">Fecha:</label>
+          <input type="date" id="modalDate" class="swal2-input" style="width:auto;" value="${today}">
+        </div>
+        <canvas id="modalChart" width="600" height="400"></canvas>
+      `,
+      width: '650px',
+      showCloseButton: true,
+      didOpen: async () => {
+        const popup     = Swal.getPopup();
+        const dateInput = popup.querySelector('#modalDate');
+        const ctx       = popup.querySelector('#modalChart').getContext('2d');
+        let chartPopup;
+
+        // Crear chart vacío según sensor
+        chartPopup = new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: [],
+            datasets: sensor === 'tempHum' ? [
+              { label: 'Temp (°C)', data: [], fill: false },
+              { label: 'Hum (%)',   data: [], fill: false }
+            ] : sensor === 'mq135' ? [
+              { label: 'CO₂ (ppm)',    data: [], fill: false },
+              { label: 'Metano (ppm)', data: [], fill: false },
+              { label: 'Butano (ppm)', data: [], fill: false },
+              { label: 'Propano (ppm)',data: [], fill: false }
+            ] : [
+              { label: sensor, data: [], fill: false }
+            ]
+          },
+          options: {
+            responsive: true,
+            animation: { duration: 0 }
+          }
+        });
+
+        async function loadPopup() {
+          try {
+            const res = await fetch(
+              `${baseApi}/get_history.php?deviceId=${currentDeviceId}&sensorType=${sensor}&date=${dateInput.value}`
+            );
+            const data = await res.json();
+            data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+            const labels = data.map(i => {
+              const dt = toTucumanTime(i.timestamp);
+              return `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+            });
+
+            let series;
+            if (sensor === 'tempHum') {
+              const t = [], h = [];
+              data.forEach(i => {
+                try {
+                  const parsed = typeof i.value === 'string' ? JSON.parse(i.value) : i.value;
+                  t.push(parsed?.temperature ?? null);
+                  h.push(parsed?.humidity ?? null);
+                } catch (e) {
+                  console.warn('Error tempHum:', i.value);
+                }
               });
-
-              let series;
-              if (sensor === 'tempHum') {
-                const t=[], h=[];
-                data.forEach(i => {
-                  try {
-                    const parsed = typeof i.value === 'string' ? JSON.parse(i.value) : i.value;
-                    t.push(parsed?.temperature ?? null);
-                    h.push(parsed?.humidity ?? null);
-                  } catch(e) {
-                    console.warn('Error parseando tempHum en popup:', i.value);
-                  }
-                });
-                series = [t,h];
-              }
-              else if (sensor === 'mq135') {
-                const co2=[], me=[], bu=[], pr=[];
-                data.forEach(i => {
-                  try {
-                    const parsed = typeof i.value === 'string' ? JSON.parse(i.value) : i.value;
-                    co2.push(parsed?.co2 ?? null);
-                    me.push(parsed?.methane ?? null);
-                    bu.push(parsed?.butane ?? null);
-                    pr.push(parsed?.propane ?? null);
-                  } catch(e) {
-                    console.warn('Error parseando mq135 en popup:', i.value);
-                  }
-                });
-                series = [co2, me, bu, pr];
-              }
-              else {
-                series = [ data.map(i=>i.value) ];
-              }
-
-              chartPopup.data.labels = labels;
-              chartPopup.data.datasets.forEach((ds,i)=> ds.data = series[i] || []);
-              chartPopup.update();
+              series = [t, h];
+            } else if (sensor === 'mq135') {
+              const co2 = [], me = [], bu = [], pr = [];
+              data.forEach(i => {
+                try {
+                  const parsed = typeof i.value === 'string' ? JSON.parse(i.value) : i.value;
+                  co2.push(parsed?.co2 ?? null);
+                  me.push(parsed?.methane ?? null);
+                  bu.push(parsed?.butane ?? null);
+                  pr.push(parsed?.propane ?? null);
+                } catch (e) {
+                  console.warn('Error mq135:', i.value);
+                }
+              });
+              series = [co2, me, bu, pr];
+            } else {
+              series = [ data.map(i => i.value) ];
             }
-            catch(e){ console.error(e); }
-          }
 
-          await loadPopup();
-          let iv = null;
-          if (dateInput.value === today) {
-            iv = setInterval(loadPopup, 5000);
+            chartPopup.data.labels = labels;
+            chartPopup.data.datasets.forEach((ds, i) => ds.data = series[i] || []);
+            chartPopup.update();
+          } catch (e) {
+            console.error('Error en loadPopup:', e);
           }
-          dateInput.addEventListener('change', ()=> {
-            if (iv) clearInterval(iv);
-            loadPopup();
-          });
-          popup.querySelector('.swal2-close')
-               .addEventListener('click',()=> iv && clearInterval(iv));
         }
-      });
+
+        await loadPopup();
+        let iv = null;
+
+        if (dateInput.value === today) {
+          iv = setInterval(loadPopup, 5000);
+        }
+
+        dateInput.addEventListener('change', () => {
+          if (iv) clearInterval(iv);
+          loadPopup();
+        });
+
+        popup.querySelector('.swal2-close')
+             .addEventListener('click', () => iv && clearInterval(iv));
+      }
     });
   });
+});
+
 
   setInterval(() => {
     chartsConfig.forEach(loadChart);
