@@ -87,8 +87,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     allData.forEach(item => {
       const dtTuc = toTucumanTime(item.timestamp);
-      const hhmm  = `${String(dtTuc.getHours()).padStart(2, '0')}:${String(dtTuc.getMinutes()).padStart(2, '0')}`;
+      console.log('🕒 Hora ajustada:', dtTuc.toString());
 
+      const hhmm  = `${String(dtTuc.getHours()).padStart(2, '0')}:${String(dtTuc.getMinutes()).padStart(2, '0')}`;
 
       if (cfg.sensorType === 'tempHum') {
         try {
