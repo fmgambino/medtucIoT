@@ -54,89 +54,94 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ⏰ Ajuste de zona horaria local de Tucumán
 function toTucumanTime(timestamp) {
-  return new Date(new Date(timestamp).toLocaleString("en-US", { timeZone: "America/Argentina/Tucuman" }));
+  function toTucumanTime(timestamp) {
+  return new Date(new Date(timestamp + 'Z').toLocaleString("en-US", { timeZone: "America/Argentina/Buenos_Aires" }));
+}}// ✅ Ajuste de zona horaria para Tucumán
+function toTucumanTime(timestamp) {
+  return new Date(new Date(timestamp + 'Z').toLocaleString("en-US", {
+    timeZone: "America/Argentina/Buenos_Aires"
+  }));
 }
 
-  async function loadChart(cfg) {
-    if (!cfg.chart || !currentDeviceId) return;
-    const date = fechaInput ? fechaInput.value : today;
-    let allData = [];
+async function loadChart(cfg) {
+  if (!cfg.chart || !currentDeviceId) return;
+  const date = fechaInput ? fechaInput.value : today;
+  let allData = [];
 
-    if (cfg.sensorType) {
+  if (cfg.sensorType) {
+    try {
+      const res = await fetch(
+        `${baseApi}/get_history.php?deviceId=${currentDeviceId}&sensorType=${cfg.sensorType}&date=${date}`
+      );
+      const data = await res.json();
+      allData = data.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    } catch (e) {
+      console.error(e);
+    }
+  } else {
+    await Promise.all(cfg.sensorTypes.map(async type => {
       try {
         const res = await fetch(
-          `${baseApi}/get_history.php?deviceId=${currentDeviceId}&sensorType=${cfg.sensorType}&date=${date}`
+          `${baseApi}/get_history.php?deviceId=${currentDeviceId}&sensorType=${type}&date=${date}`
         );
         const data = await res.json();
-        allData = data.sort((a,b)=> new Date(a.timestamp) - new Date(b.timestamp));
-      } catch(e) {
+        allData.push(...data);
+      } catch (e) {
         console.error(e);
       }
-    } else {
-      await Promise.all(cfg.sensorTypes.map(async type => {
-        try {
-          const res = await fetch(
-            `${baseApi}/get_history.php?deviceId=${currentDeviceId}&sensorType=${type}&date=${date}`
-          );
-          const data = await res.json();
-          allData.push(...data);
-        } catch(e) {
-          console.error(e);
+    }));
+    allData.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+  }
+
+  const labels = [];
+  const series = cfg.datasets.map(() => []);
+
+  allData.forEach(item => {
+    const dt = toTucumanTime(item.timestamp);
+    const hhmm = `${String(dt.getHours()).padStart(2, '0')}:${String(dt.getMinutes()).padStart(2, '0')}`;
+
+    if (cfg.sensorType === 'tempHum') {
+      try {
+        const parsed = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
+        if (parsed?.temperature !== undefined && parsed?.humidity !== undefined) {
+          labels.push(hhmm);
+          series[0].push(parsed.temperature);
+          series[1].push(parsed.humidity);
         }
-      }));
-      allData.sort((a,b)=> new Date(a.timestamp) - new Date(b.timestamp));
+      } catch (e) {
+        console.warn('❌ Error al parsear tempHum:', item.value);
+      }
     }
 
-    const labels = [];
-    const series = cfg.datasets.map(()=> []);
-
-    allData.forEach(item => {
-        const dt = toTucumanTime(item.timestamp);
-        const hhmm = `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
-
-
-
-      if (cfg.sensorType === 'tempHum') {
-        try {
-          const parsed = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
-          if (parsed?.temperature !== undefined && parsed?.humidity !== undefined) {
-            labels.push(hhmm);
-            series[0].push(parsed.temperature);
-            series[1].push(parsed.humidity);
-          }
-        } catch (e) {
-          console.warn('❌ Error al parsear tempHum:', item.value);
+    else if (cfg.sensorType === 'mq135') {
+      try {
+        const parsed = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
+        if (parsed?.co2 || parsed?.methane || parsed?.butane || parsed?.propane) {
+          labels.push(hhmm);
+          series[0].push(parsed?.co2 ?? null);
+          series[1].push(parsed?.methane ?? null);
+          series[2].push(parsed?.butane ?? null);
+          series[3].push(parsed?.propane ?? null);
         }
+      } catch (e) {
+        console.warn('❌ Error al parsear mq135:', item.value);
       }
+    }
 
-      else if (cfg.sensorType === 'mq135') {
-        try {
-          const parsed = typeof item.value === 'string' ? JSON.parse(item.value) : item.value;
-          if (parsed?.co2 || parsed?.methane || parsed?.butane || parsed?.propane) {
-            labels.push(hhmm);
-            series[0].push(parsed?.co2 ?? null);
-            series[1].push(parsed?.methane ?? null);
-            series[2].push(parsed?.butane ?? null);
-            series[3].push(parsed?.propane ?? null);
-          }
-        } catch (e) {
-          console.warn('❌ Error al parsear mq135:', item.value);
-        }
+    else if (cfg.sensorTypes) {
+      const i = cfg.sensorTypes.indexOf(item.sensor_type);
+      if (i >= 0) {
+        if (!labels.includes(hhmm)) labels.push(hhmm);
+        series[i].push(item.value);
       }
+    }
+  });
 
-      else if (cfg.sensorTypes) {
-        const i = cfg.sensorTypes.indexOf(item.sensor_type);
-        if (i >= 0) {
-          if (!labels.includes(hhmm)) labels.push(hhmm);
-          series[i].push(item.value);
-        }
-      }
-    });
+  cfg.chart.data.labels = labels;
+  cfg.chart.data.datasets.forEach((ds, i) => ds.data = series[i]);
+  cfg.chart.update();
+}
 
-    cfg.chart.data.labels = labels;
-    cfg.chart.data.datasets.forEach((ds,i)=> ds.data = series[i]);
-    cfg.chart.update();
-  }
 
   chartsConfig.forEach(loadChart);
   if (fechaInput) {
