@@ -136,8 +136,7 @@ if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['actuator_id'],$_POST['n
 }
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ' . BASE_PATH . '/login');
-    exit;
+    header('Location: ' . BASE_PATH . 'login');    exit;
 }
 $user_img = $_SESSION['profile_image'] ?? 'default.png';
 
