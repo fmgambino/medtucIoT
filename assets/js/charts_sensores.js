@@ -86,8 +86,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const series = cfg.datasets.map(()=> []);
 
     allData.forEach(item => {
-      const dt   = new Date(item.timestamp);
-      const hhmm = `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+        const dtLocal = new Date(new Date(item.timestamp).toLocaleString("en-US", { timeZone: "America/Argentina/Tucuman" }));
+        const hhmm = `${String(dtLocal.getHours()).padStart(2, '0')}:${String(dtLocal.getMinutes()).padStart(2, '0')}`;
+
 
       if (cfg.sensorType === 'tempHum') {
         try {
@@ -198,10 +199,11 @@ document.addEventListener('DOMContentLoaded', () => {
               const data = await res.json();
               data.sort((a,b)=> new Date(a.timestamp) - new Date(b.timestamp));
 
-              const labels = data.map(i => {
-                const dt = new Date(i.timestamp);
-                return `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
-              });
+const labels = data.map(i => {
+  const dt = new Date(i.timestamp);
+  return `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+});
+
 
               let series;
               if (sensor === 'tempHum') {

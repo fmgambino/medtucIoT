@@ -1,6 +1,6 @@
 <?php
 // /app/config.php
-
+date_default_timezone_set('America/Argentina/Buenos_Aires');
 // ----------------------
 // 1) Detectar entorno y definir BASE_PATH automáticamente
 // ----------------------
