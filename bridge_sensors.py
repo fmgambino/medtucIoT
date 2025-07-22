@@ -2,20 +2,33 @@ import paho.mqtt.client as mqtt
 import mysql.connector as mysql
 import json
 
-# Conexión a MySQL
-db = mysql.connect(
+# --- Conexiones a MySQL ---
+local_db = mysql.connect(
     host="localhost",
     user="root",
-    password="",  # cambia si tenés contraseña
+    password="",  # XAMPP: poné tu contraseña si aplica
     database="medtuciot"
 )
-cursor = db.cursor()
+remote_db = mysql.connect(
+    host="localhost",  # ⚠️ EN PRODUCCIÓN: CAMBIA ESTO POR EL HOST REMOTO REAL
+    user="u197809344_fmgiot",
+    password="Jamboree0381$$",
+    database="u197809344_medtuciot"
+)
+local_cursor = local_db.cursor()
+remote_cursor = remote_db.cursor()
 
 # Obtener device_id numérico usando esp32_id (ej: ESPA7B0)
-def get_device_id(esp32_id):
+def get_device_id(cursor, esp32_id):
     cursor.execute("SELECT id FROM devices WHERE esp32_id = %s", (esp32_id,))
     result = cursor.fetchone()
     return result[0] if result else None
+
+# Ejecuta una query en ambas bases
+def execute_dual(query, values):
+    for cursor, db in [(local_cursor, local_db), (remote_cursor, remote_db)]:
+        cursor.execute(query, values)
+        db.commit()
 
 # Callback al recibir mensaje MQTT
 def on_message(client, userdata, msg):
@@ -26,8 +39,9 @@ def on_message(client, userdata, msg):
             return
 
         _, device_mqtt, variable = parts
-        device_id = get_device_id(device_mqtt)
 
+        # Obtener device_id desde ambas bases (usa local como referencia)
+        device_id = get_device_id(local_cursor, device_mqtt)
         if not device_id:
             print(f"❌ No existe device_id para esp32_id '{device_mqtt}'")
             return
@@ -39,20 +53,19 @@ def on_message(client, userdata, msg):
         if isinstance(data, dict):
             if variable == 'tempHum':
                 if 'temperature' in data and 'humidity' in data:
-                    # Guardar JSON compuesto
-                    cursor.execute("""
+                    # tempHum combinado
+                    execute_dual("""
                         INSERT INTO sensor_data (device_id, sensor_type, value, unit)
                         VALUES (%s, %s, %s, %s)
                     """, (device_id, 'tempHum', json.dumps(data), ''))
 
-                    # Insertar también temperature
-                    cursor.execute("""
+                    # separados
+                    execute_dual("""
                         INSERT INTO sensor_data (device_id, sensor_type, value, unit)
                         VALUES (%s, %s, %s, %s)
                     """, (device_id, 'temperature', float(data['temperature']), '°C'))
 
-                    # Insertar también humidity
-                    cursor.execute("""
+                    execute_dual("""
                         INSERT INTO sensor_data (device_id, sensor_type, value, unit)
                         VALUES (%s, %s, %s, %s)
                     """, (device_id, 'humidity', float(data['humidity']), '%'))
@@ -63,7 +76,7 @@ def on_message(client, userdata, msg):
 
             elif variable == 'mq135':
                 if any(k in data for k in ['co2', 'methane', 'butane', 'propane']):
-                    cursor.execute("""
+                    execute_dual("""
                         INSERT INTO sensor_data (device_id, sensor_type, value, unit)
                         VALUES (%s, %s, %s, %s)
                     """, (device_id, 'mq135', json.dumps(data), ''))
@@ -71,11 +84,10 @@ def on_message(client, userdata, msg):
                     print(f"⚠️ Campos faltantes en mq135: {data}")
                     return
             else:
-                print(f"⚠️ JSON recibido inesperado en variable: {variable}")
+                print(f"⚠️ JSON inesperado para variable: {variable}")
                 return
 
         else:
-            # Valor simple
             try:
                 value = float(data)
             except ValueError:
@@ -92,16 +104,15 @@ def on_message(client, userdata, msg):
                 'sLDR': ''
             }
             unit = unit_map_simple.get(variable, '')
-            cursor.execute("""
+            execute_dual("""
                 INSERT INTO sensor_data (device_id, sensor_type, value, unit)
                 VALUES (%s, %s, %s, %s)
             """, (device_id, variable, value, unit))
 
-        db.commit()
         print(f"✅ Insertado: {msg.topic} → {payload}")
 
     except Exception as e:
-        print(f"❌ Error al procesar {msg.topic} → {msg.payload}: {e}")
+        print(f"❌ Error procesando {msg.topic} → {msg.payload}: {e}")
 
 # Conexión MQTT
 client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)

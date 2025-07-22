@@ -11,14 +11,12 @@ if (!isset($_GET['deviceId'])) {
 $deviceId = (int) $_GET['deviceId'];
 
 try {
-  $result = [];
-
-  // Consulta todo el sensor_data reciente
+  // Buscar las últimas muestras de cada tipo de sensor en las últimas 24h
   $stmt = $pdo->prepare("
     SELECT sensor_type, value, unit, timestamp
     FROM sensor_data
     WHERE device_id = ?
-    AND timestamp >= NOW() - INTERVAL 1 DAY
+      AND timestamp >= NOW() - INTERVAL 1 DAY
     ORDER BY timestamp DESC
   ");
   $stmt->execute([$deviceId]);
@@ -32,38 +30,43 @@ try {
     }
   }
 
-  // Agrupar temp + hum => tempHum
-  $temp = $latest['temp']['value'] ?? null;
-  $hum  = $latest['hum']['value']  ?? null;
-  if ($temp !== null || $hum !== null) {
+  $result = [];
+
+  // Si existe 'tempHum' JSON
+  if (isset($latest['tempHum'])) {
+    $parsed = json_decode($latest['tempHum']['value'], true);
     $result[] = [
       'sensor_type' => 'tempHum',
-      'value' => ['temp' => $temp, 'hum' => $hum]
+      'value' => [
+        'temperature' => $parsed['temperature'] ?? null,
+        'humidity'    => $parsed['humidity'] ?? null
+      ],
+      'timestamp' => $latest['tempHum']['timestamp']
     ];
-    unset($latest['temp'], $latest['hum']);
+    unset($latest['tempHum']);
   }
 
-  // Agrupar gases MQ135
-  $gases = ['co2', 'methane', 'butane', 'propane'];
-  $gasValues = [];
-  foreach ($gases as $g) {
-    if (isset($latest[$g])) {
-      $gasValues[$g] = $latest[$g]['value'];
-      unset($latest[$g]);
-    }
-  }
-  if (!empty($gasValues)) {
+  // MQ135 gases
+  if (isset($latest['mq135'])) {
+    $parsed = json_decode($latest['mq135']['value'], true);
     $result[] = [
       'sensor_type' => 'mq135',
-      'value' => $gasValues
+      'value' => [
+        'co2'     => $parsed['co2'] ?? null,
+        'methane' => $parsed['methane'] ?? null,
+        'butane'  => $parsed['butane'] ?? null,
+        'propane' => $parsed['propane'] ?? null
+      ],
+      'timestamp' => $latest['mq135']['timestamp']
     ];
+    unset($latest['mq135']);
   }
 
-  // El resto de sensores
-  foreach ($latest as $row) {
+  // Otros sensores individuales
+  foreach ($latest as $type => $row) {
     $result[] = [
-      'sensor_type' => $row['sensor_type'],
-      'value'       => $row['value'],
+      'sensor_type' => $type,
+      'value'       => is_numeric($row['value']) ? (float)$row['value'] : $row['value'],
       'unit'        => $row['unit'],
       'timestamp'   => $row['timestamp']
     ];

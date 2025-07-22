@@ -160,7 +160,7 @@ void loop() {
 
   static unsigned long lastSens = 0;
   // 3 600 000 ms = 60 min
-  if (millis() - lastSens >= 3600000) {
+  if (millis() - lastSens >= 5000) {
     lastSens = millis();
     publishTempHum();
     publishMQ135();
