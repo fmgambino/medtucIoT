@@ -17,7 +17,6 @@ if (ini_get("session.use_cookies")) {
 
 session_destroy();
 
-// Redirigir al login usando ruta amigable
-$baseUrl = rtrim(BASE_PATH, '/');
-header("Location: {$baseUrl}/login");
+// Redirigir directamente al archivo login.php
+header("Location: login.php");
 exit;
