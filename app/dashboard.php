@@ -126,20 +126,33 @@ $actuators = [
 
 // ——————————————————————————————————————————————————————
 
-// → Inserta aquí (línea 25 antes de if !isset)
-if ($_SERVER['REQUEST_METHOD']==='POST' && isset($_POST['actuator_id'],$_POST['new_name'])) {
-    $stmt = $pdo->prepare('UPDATE devices SET name=? WHERE id=?');
-    $stmt->execute([trim($_POST['new_name']), (int)$_POST['actuator_id']]);
-    // Redirige para evitar resubmit
-    header('Location: '.BASE_PATH."/dashboard?place={$_POST['place']}&device={$_POST['device']}");
+// → Inserta aquí (línea 25 aprox)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['actuator_id'], $_POST['new_name'])) {
+    $stmt = $pdo->prepare('UPDATE devices SET name = ? WHERE id = ?');
+    $stmt->execute([
+        trim($_POST['new_name']),
+        (int)$_POST['actuator_id']
+    ]);
+
+    // Redirige para evitar resubmit con parámetros limpios
+    $baseUrl = rtrim(BASE_PATH, '/');
+    $place   = urlencode($_POST['place'] ?? '');
+    $device  = urlencode($_POST['device'] ?? '');
+    header("Location: {$baseUrl}/dashboard?place={$place}&device={$device}");
     exit;
 }
 
+// Verifica si el usuario está autenticado
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ' . BASE_PATH . 'login');    exit;
+    $baseUrl = rtrim(BASE_PATH, '/');
+    header("Location: {$baseUrl}/login");
+    exit;
 }
+
+// Variables de sesión y navegación
 $user_img = $_SESSION['profile_image'] ?? 'default.png';
 
+// Manejo de selección de lugar y dispositivo
 $selected_place  = (int)($_GET['place']  ?? $places[0]['id']);
 $devices         = $devices_by_place[$selected_place] ?? [];
 $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
@@ -150,21 +163,19 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>IoT Dashboard – MedTuCIoT</title>
+
   <!-- Remixicon -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
-  <!-- Estilos -->
-  <link rel="stylesheet" href="<?= BASE_PATH ?>/assets/css/styles.css">
-  <link rel="stylesheet" href="<?= BASE_PATH ?>/assets/css/addSensor.css">
-  <link rel="stylesheet" href="<?= BASE_PATH ?>/assets/css/mobiles.css">
-  
 
-  <!-- SweetAlert2 -->
+  <!-- Estilos -->
+  <link rel="stylesheet" href="<?= rtrim(BASE_PATH, '/') ?>/assets/css/styles.css">
+  <link rel="stylesheet" href="<?= rtrim(BASE_PATH, '/') ?>/assets/css/addSensor.css">
+  <link rel="stylesheet" href="<?= rtrim(BASE_PATH, '/') ?>/assets/css/mobiles.css">
+
+  <!-- Librerías JS -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@^2.0.0"></script>
-
-
-
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@^2.0.0"></script>
 </head>
 <body>
 
@@ -434,36 +445,36 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
     </div>
   </div>
 
-  <!-- SCRIPTS -->
+<!-- SCRIPTS -->
 <script>
-  window.BASE_PATH = '<?= BASE_PATH ?>';
+  // Definir BASE_PATH global JS
+  const BASE_PATH = '<?= rtrim(BASE_PATH, '/') ?>';
+  window.BASE_PATH = BASE_PATH;
 </script>
-<script>
-  window.BASE_PATH = '/medtucIoT';  // ¡ojo con mayúsculas/minúsculas!
-</script>
-<script>
-  const currentDeviceId = <?= (int)$currentDeviceId ?>;
-  const BASE_PATH = '<?= BASE_PATH ?>';
-</script>
-<script defer src="<?= BASE_PATH ?>/assets/js/main.js"></script>
-<script defer src="<?= BASE_PATH ?>/assets/js/addSensor.js"></script>
-<script defer src="<?= BASE_PATH ?>/assets/js/charts_sensores.js"></script>
 
+<script>
+  const currentDeviceId = <?= (int)($currentDeviceId ?? 0) ?>;
+</script>
+
+<!-- Scripts propios -->
+<script defer src="<?= rtrim(BASE_PATH, '/') ?>/assets/js/main.js"></script>
+<script defer src="<?= rtrim(BASE_PATH, '/') ?>/assets/js/addSensor.js"></script>
+<script defer src="<?= rtrim(BASE_PATH, '/') ?>/assets/js/charts_sensores.js"></script>
+<script defer src="<?= rtrim(BASE_PATH, '/') ?>/assets/js/pwa.js"></script>
+
+<!-- Librerías externas -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@^2.0.0"></script>
-
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="assets/js/pwa.js"></script>
-<script defer src="<?= BASE_PATH ?>/assets/js/pwa.js"></script>
 
+<!-- Service Worker adaptativo -->
 <script>
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('/medtucIoT/app/service-wojer.js', {
-    scope: '/medtucIoT/app/'
+  navigator.serviceWorker.register(BASE_PATH + '/app/service-wojer.js', {
+    scope: BASE_PATH + '/app/'
   })
   .then(reg => {
     console.log('SW registrado', reg);
-    // Si ya está activo—pero no controla—hagamos reload
     if (navigator.serviceWorker.controller) return;
     reg.addEventListener('updatefound', () => {
       const newSW = reg.installing;
@@ -479,19 +490,16 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
-
-
-
-
-  <script>
-    function onPlaceChange() {
-      const p = document.getElementById('placeSelect').value;
-      const d = document.getElementById('deviceSelect').value;
-      window.location = '<?= BASE_PATH ?>/dashboard?place=' + p + '&device=' + d;
-    }
-    function onDeviceChange() {
-      onPlaceChange();
-    }
-  </script>
+<!-- Cambio de lugar o dispositivo -->
+<script>
+function onPlaceChange() {
+  const p = document.getElementById('placeSelect').value;
+  const d = document.getElementById('deviceSelect').value;
+  window.location.href = `${BASE_PATH}/dashboard?place=${encodeURIComponent(p)}&device=${encodeURIComponent(d)}`;
+}
+function onDeviceChange() {
+  onPlaceChange();
+}
+</script>
 </body>
 </html>
