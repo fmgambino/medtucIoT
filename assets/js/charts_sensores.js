@@ -86,8 +86,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const series = cfg.datasets.map(()=> []);
 
     allData.forEach(item => {
-      const dt   = new Date(item.timestamp);
-      const hhmm = `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+      const dtTuc = toTucumanTime(item.timestamp);
+      const hhmm  = `${String(dtTuc.getHours()).padStart(2, '0')}:${String(dtTuc.getMinutes()).padStart(2, '0')}`;
+
 
       if (cfg.sensorType === 'tempHum') {
         try {
