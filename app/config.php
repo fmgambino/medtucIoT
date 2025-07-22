@@ -9,7 +9,7 @@ $isLocal = strpos($hostName, 'localhost') !== false || strpos($hostName, '127.0.
 
 if ($isLocal) {
     // Entorno local (XAMPP)
-    define('BASE_PATH', '/medtucIoT/');
+    defined('BASE_PATH') || define('BASE_PATH', '/medtucIoT/');
 } else {
     // Producción (Hostinger - subdominio apunta al root del proyecto)
     define('BASE_PATH', '/');
