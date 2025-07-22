@@ -19,13 +19,11 @@ if ($isLocal) {
 // 2) Configuración de la base de datos
 // ----------------------
 if ($isLocal) {
-    // Entorno local (XAMPP)
     $dbHost = '127.0.0.1';
     $dbName = 'medtuciot';
     $dbUser = 'root';
     $dbPass = '';
 } else {
-    // Producción (Hostinger)
     $dbHost = 'localhost';
     $dbName = 'u197809344_medtuciot';
     $dbUser = 'u197809344_fmgiot';
@@ -47,5 +45,6 @@ try {
         ]
     );
 } catch (PDOException $e) {
+    // En producción podrías loguear el error a un archivo
     die("Error de conexión a la base de datos: " . $e->getMessage());
 }

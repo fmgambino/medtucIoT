@@ -502,7 +502,7 @@ CREATE TABLE `v_mq135_data` (
 --
 DROP TABLE IF EXISTS `v_dht22_data`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_dht22_data`  AS SELECT `sensor_data`.`id` AS `id`, `sensor_data`.`device_id` AS `device_id`, json_unquote(json_extract(`sensor_data`.`value`,'$.temperature')) AS `temperature`, json_unquote(json_extract(`sensor_data`.`value`,'$.humidity')) AS `humidity`, `sensor_data`.`timestamp` AS `timestamp` FROM `sensor_data` WHERE `sensor_data`.`sensor_type` = 'tempHum' ;
+CREATE ALGORITHM=UNDEFINED  SQL SECURITY DEFINER VIEW `v_dht22_data`  AS SELECT `sensor_data`.`id` AS `id`, `sensor_data`.`device_id` AS `device_id`, json_unquote(json_extract(`sensor_data`.`value`,'$.temperature')) AS `temperature`, json_unquote(json_extract(`sensor_data`.`value`,'$.humidity')) AS `humidity`, `sensor_data`.`timestamp` AS `timestamp` FROM `sensor_data` WHERE `sensor_data`.`sensor_type` = 'tempHum' ;
 
 -- --------------------------------------------------------
 
@@ -511,7 +511,7 @@ CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW 
 --
 DROP TABLE IF EXISTS `v_mq135_data`;
 
-CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`localhost` SQL SECURITY DEFINER VIEW `v_mq135_data`  AS SELECT `sensor_data`.`id` AS `id`, `sensor_data`.`device_id` AS `device_id`, json_unquote(json_extract(`sensor_data`.`value`,'$.co2')) AS `co2`, json_unquote(json_extract(`sensor_data`.`value`,'$.methane')) AS `methane`, json_unquote(json_extract(`sensor_data`.`value`,'$.butane')) AS `butane`, json_unquote(json_extract(`sensor_data`.`value`,'$.propane')) AS `propane`, `sensor_data`.`timestamp` AS `timestamp` FROM `sensor_data` WHERE `sensor_data`.`sensor_type` = 'mq135' ;
+CREATE ALGORITHM=UNDEFINED  SQL SECURITY DEFINER VIEW `v_mq135_data`  AS SELECT `sensor_data`.`id` AS `id`, `sensor_data`.`device_id` AS `device_id`, json_unquote(json_extract(`sensor_data`.`value`,'$.co2')) AS `co2`, json_unquote(json_extract(`sensor_data`.`value`,'$.methane')) AS `methane`, json_unquote(json_extract(`sensor_data`.`value`,'$.butane')) AS `butane`, json_unquote(json_extract(`sensor_data`.`value`,'$.propane')) AS `propane`, `sensor_data`.`timestamp` AS `timestamp` FROM `sensor_data` WHERE `sensor_data`.`sensor_type` = 'mq135' ;
 
 --
 -- Indexes for dumped tables
