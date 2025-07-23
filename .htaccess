@@ -26,14 +26,11 @@ RewriteRule ^sensor/?$        app/sensor.php        [L,QSA]
 RewriteRule ^get_latest/?$    app/get_latest.php    [L,QSA]
 RewriteRule ^get_history/?$   app/get_history.php   [L,QSA]
 
-# 5) Excepciones: permitir acceso directo a APIs necesarias
-RewriteCond %{THE_REQUEST} \s/app/(sensor|get_latest|get_history|logout)\.php [NC]
+# 5) Excepciones: permitir acceso directo a APIs necesarias (incluye imgPerfil.php)
+RewriteCond %{THE_REQUEST} \s/app/(sensor|get_latest|get_history|logout|imgPerfil)\.php [NC]
 RewriteRule ^ - [L]
 
-# 6) Bloquear acceso directo a /app/*.php restantes
+# 6) Bloquear acceso directo a otros /app/*.php excepto los permitidos arriba
 RewriteCond %{THE_REQUEST} \s/app/.*\.php [NC]
-RewriteCond %{THE_REQUEST} \s/app/(?!logout\.php|get_latest\.php|get_history\.php|sensor\.php).*\.php [NC]
+RewriteCond %{THE_REQUEST} \s/app/(?!logout\.php|get_latest\.php|get_history\.php|sensor\.php|imgPerfil\.php).*\.php [NC]
 RewriteRule ^app/.*\.php$ - [F]
-
-# 7) Deshabilitar listado de directorios
-Options -Indexes
