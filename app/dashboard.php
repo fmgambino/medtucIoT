@@ -1,6 +1,29 @@
 <?php
+// dashboard.php
 session_start();
-require __DIR__ . '/config.php';
+require_once __DIR__ . '/config.php';
+
+if (!isset($_SESSION['user_id'])) {
+    header('Location: ' . BASE_PATH . '/app/login.php');
+    exit;
+}
+
+$userId = $_SESSION['user_id'];
+
+// Obtener nombre del archivo de imagen desde la DB
+$stmt = $pdo->prepare("SELECT profile_image FROM users WHERE id = ?");
+$stmt->execute([$userId]);
+$relativePath = $stmt->fetchColumn() ?: 'assets/files/default.png';
+
+// Obtener path completo en disco para evitar caché
+$fullPath = __DIR__ . '/../' . $relativePath;
+$version  = file_exists($fullPath) ? filemtime($fullPath) : time();
+
+// Ruta final con anti-caché
+$user_img = $relativePath . '?v=' . $version;
+
+
+
 
 // 1) Lugares y dispositivos
 $places = [
@@ -254,15 +277,30 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
   <i id="themeToggle" class="ri-sun-line icon-btn" title="Modo claro/oscuro"></i>
   <i id="langToggle"  class="ri-earth-line icon-btn"  title="ES/EN"></i>
   <i id="notifToggle"class="ri-notification-3-line icon-btn" title="Notificaciones"></i>
+<!-- Botón del menú hamburguesa -->
+<button class="hamburger" id="hamburger" aria-label="Menú móvil">
+  <span></span><span></span><span></span>
+</button>
 
-  <!-- MUEVE EL HAMBURGER AQUÍ -->
-  <button class="hamburger" id="hamburger" aria-label="Menú móvil">
-    <span></span><span></span><span></span>
-  </button>
+<!-- Formulario oculto -->
+<form id="profileForm" action="<?= BASE_PATH ?>/app/imgPerfil.php" method="POST" enctype="multipart/form-data" style="display:none;">
+  <input type="file" name="profile_image" id="profileInput" accept="image/*" onchange="document.getElementById('profileForm').submit();">
+</form>
 
-  <img src="<?= BASE_PATH ?>/uploads/<?= htmlspecialchars($user_img, ENT_QUOTES) ?>"       class="profile-img icon-btn" alt="Perfil">
-  <a href="<?= BASE_PATH ?>/logout" class="icon-btn"><i class="ri-logout-box-line"></i></a>
-</div>
+<!-- Imagen de perfil con versión anti-caché -->
+<img src="<?= BASE_PATH . '/' . htmlspecialchars($_SESSION['profile_image'] ?? 'assets/files/default.png') ?>?v=<?= time() ?>"
+     class="profile-img icon-btn"
+     alt="Perfil"
+     onclick="document.getElementById('profileInput').click();"
+     style="cursor:pointer; border-radius:50%; width:40px; height:40px; object-fit:cover;">
+
+
+
+<!-- Botón de logout -->
+<a href="<?= BASE_PATH ?>/logout" class="icon-btn"><i class="ri-logout-box-line"></i></a>
+
+
+
 
       </header>
 
