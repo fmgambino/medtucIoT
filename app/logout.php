@@ -21,7 +21,7 @@ if (ini_get("session.use_cookies")) {
 
 session_destroy();
 
-// Redirigir al login dentro de /app/
+// Redirigir a la ruta amigable de login
 $baseUrl = rtrim(BASE_PATH, '/');
-header("Location: {$baseUrl}/app/login.php");
+header("Location: {$baseUrl}/login");
 exit;
