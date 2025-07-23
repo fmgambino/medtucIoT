@@ -1,29 +1,27 @@
 <?php
-// /app/login.php
+// /medtuciot/app/login.php
 session_start();
 require __DIR__ . '/config.php';
 
-// Normaliza BASE_PATH para evitar doble barra
-$baseUrl = rtrim(BASE_PATH, '/');
-
 // Si ya está autenticado, redirige al dashboard
 if (isset($_SESSION['user_id'])) {
-    header("Location: {$baseUrl}/dashboard");
+    header('Location: ' . BASE_PATH . '/dashboard');
     exit;
 }
 
 $error = $_GET['error'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
+    $username = trim($_POST['username'] ?? '');  // aquí username en realidad es el correo
     $password = trim($_POST['password'] ?? '');
 
     if ($username === '' || $password === '') {
-        header("Location: {$baseUrl}/login?error=campos");
+        header('Location: ' . BASE_PATH . '/login?error=campos');
         exit;
     }
 
     try {
+        // Cambiado para buscar por email en lugar de por username
         $stmt = $pdo->prepare(
             "SELECT 
                 id, 
@@ -39,18 +37,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($user && password_verify($password, $user['password_hash'])) {
             $_SESSION['user_id']       = $user['id'];
-            $_SESSION['user_name']     = $user['username'];
+            $_SESSION['user_name']     = $user['username'];        // será el email
             $_SESSION['role']          = $user['role'];
             $_SESSION['profile_image'] = $user['profile_image'];
-
-            header("Location: {$baseUrl}/dashboard");
+            header('Location: ' . BASE_PATH . '/dashboard');
             exit;
         } else {
-            header("Location: {$baseUrl}/login?error=invalid");
+            header('Location: ' . BASE_PATH . '/login?error=invalid');
             exit;
         }
     } catch (PDOException $e) {
-        header("Location: {$baseUrl}/login?error=db");
+        header('Location: ' . BASE_PATH . '/login?error=db');
         exit;
     }
 }
@@ -60,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <base href="<?= htmlspecialchars(BASE_PATH) ?>">
+  <base href="<?= BASE_PATH ?>/">
   <title>Iniciar sesión – MedTuCIoT</title>
   <link rel="stylesheet" href="assets/css/auth.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -71,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="form-container sign-in-container">
       <form action="login" method="POST">
         <h1>Iniciar sesión</h1>
-        <input type="text" name="username" placeholder="Correo" required>
+        <input type="text" name="username" placeholder="Usuario" required>
         <div class="password-container">
           <input type="password" id="password" name="password" placeholder="Contraseña" required>
           <button type="button" id="togglePassword" class="toggle-password" aria-label="Mostrar contraseña">
@@ -141,6 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     });
 
     function toggleLanguage() {
+      // Implementa cambio de idioma (ej. guardando en localStorage y recargando)
       alert('Toggle language (implementar)');
     }
   </script>

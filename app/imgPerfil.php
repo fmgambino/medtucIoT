@@ -3,6 +3,10 @@
 session_start();
 require_once __DIR__ . '/config.php';
 
+// Normalizar BASE_PATH sin barra final
+$baseUrl = rtrim(BASE_PATH, '/');
+
+// Verifica si el usuario está autenticado
 if (!isset($_SESSION['user_id'])) {
     http_response_code(403);
     echo "Acceso denegado";
@@ -31,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['profile_image'])) {
         mkdir($uploadDir, 0755, true);
     }
 
-    // Obtener la imagen anterior
+    // Obtener la imagen anterior desde la DB
     $stmt = $pdo->prepare("SELECT profile_image FROM users WHERE id = ?");
     $stmt->execute([$userId]);
     $oldImage = $stmt->fetchColumn();
@@ -41,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['profile_image'])) {
     $filename = "profile_{$userId}_" . time() . '.' . $ext;
     $filepath = $uploadDir . $filename;
 
-    // Guardar archivo
+    // Subir imagen nueva
     if (!move_uploaded_file($file['tmp_name'], $filepath)) {
         echo "Error al subir la imagen.";
         exit;
@@ -49,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['profile_image'])) {
 
     $relativePath = "assets/files/" . $filename;
 
-    // Borrar anterior si no es default
+    // Borrar imagen anterior si no es la default
     if ($oldImage && $oldImage !== 'assets/files/default.png') {
         $oldPath = __DIR__ . '/../' . $oldImage;
         if (file_exists($oldPath)) {
@@ -57,14 +61,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['profile_image'])) {
         }
     }
 
-    // Guardar en DB y actualizar sesión
+    // Actualizar en base de datos y en sesión
     $stmt = $pdo->prepare("UPDATE users SET profile_image = ? WHERE id = ?");
     $stmt->execute([$relativePath, $userId]);
-
     $_SESSION['profile_image'] = $relativePath;
 
-    // Redirigir evitando caché
-    header("Location: " . BASE_PATH . "/dashboard?v=" . time());
+    // Redirigir con parámetro anti-cache
+    header("Location: {$baseUrl}/app/dashboard.php?v=" . time());
     exit;
 }
 
