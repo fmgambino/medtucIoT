@@ -1,8 +1,9 @@
 <?php
+// /medtuciot/app/recuperar_acceso.php
 require __DIR__ . '/config.php';
-
 header('Content-Type: application/json');
 
+// Obtener y validar el email
 $data = json_decode(file_get_contents('php://input'), true);
 $email = trim($data['email'] ?? '');
 
@@ -12,6 +13,7 @@ if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
 }
 
 try {
+    // Buscar usuario
     $stmt = $pdo->prepare("SELECT id, nombre, apellido, username FROM users WHERE email = ?");
     $stmt->execute([$email]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -21,15 +23,15 @@ try {
         exit;
     }
 
-    // Generar una nueva contraseña temporal
+    // Generar contraseña temporal
     $tempPassword = substr(bin2hex(random_bytes(4)), 0, 8);
     $hashed = password_hash($tempPassword, PASSWORD_DEFAULT);
 
-    // Actualizar la contraseña
+    // Actualizar contraseña
     $update = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
     $update->execute([$hashed, $user['id']]);
 
-    // Componer el correo
+    // Preparar correo
     $to = $email;
     $subject = "🔐 Recuperación de acceso - MedTuCIoT";
     $headers  = "MIME-Version: 1.0\r\n";
@@ -50,7 +52,7 @@ try {
 
           <p style='color: #777; font-size: 14px;'>Por seguridad, te recomendamos cambiar esta contraseña inmediatamente después de ingresar.</p>
 
-          <a href='https://medtuc.electronicagambino.com/login' style='display: inline-block; background: #ff4b2b; color: #fff; padding: 10px 20px; border-radius: 25px; text-decoration: none; font-weight: bold;'>Iniciar sesión</a>
+          <a href='https://medtuc.electronicagambino.com/login' style='display: inline-block; background: #ff4b2b; color: #fff; padding: 12px 24px; border-radius: 25px; text-decoration: none; font-weight: bold;'>Iniciar sesión</a>
 
           <hr style='margin: 30px 0; border: none; border-top: 1px solid #eee;' />
           <p style='font-size: 12px; color: #999;'>Este mensaje fue enviado automáticamente. Si no solicitaste esta recuperación, puedes ignorarlo.</p>
@@ -59,11 +61,12 @@ try {
     </html>
     ";
 
+    // Enviar correo
     if (mail($to, $subject, $message, $headers)) {
-        echo json_encode(['success' => true, 'message' => 'Se envió un correo con tus datos de acceso. Revisa tu bandeja de entrada o spam.']);
+        echo json_encode(['success' => true, 'message' => '📧 Se envió un correo con tus datos de acceso. Revisa tu bandeja de entrada o spam.']);
     } else {
-        echo json_encode(['success' => false, 'message' => 'Error al enviar el correo. Intenta nuevamente.']);
+        echo json_encode(['success' => false, 'message' => '❌ Error al enviar el correo. Intenta nuevamente.']);
     }
 } catch (Exception $e) {
-    echo json_encode(['success' => false, 'message' => 'Error interno del servidor.']);
+    echo json_encode(['success' => false, 'message' => '⚠️ Error interno del servidor.']);
 }
