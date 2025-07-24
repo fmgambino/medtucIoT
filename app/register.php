@@ -123,7 +123,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 function validateCaptcha($captcha) {
-    $secretKey = 'TU_SECRET_KEY'; // ← Sustituye con tu clave secreta de reCAPTCHA
+    $secretKey = '6Les8I0rAAAAAAp5jL1MUQIZZgzRhiCjvNqk_M03'; // ← Sustituye con tu clave secreta de reCAPTCHA
     $response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$secretKey}&response={$captcha}");
     $result = json_decode($response, true);
     return $result['success'] ?? false;
@@ -182,7 +182,7 @@ function validateCaptcha($captcha) {
         <input type="password" name="confirm_password" placeholder="Confirmar Contraseña" required>
 
         <!-- ReCAPTCHA -->
-        <div class="g-recaptcha" data-sitekey="TU_SITE_KEY"></div>
+        <div class="g-recaptcha" data-sitekey="6Les8I0rAAAAABX5jxa83mh6b78OVEWJuvn5qU3C"></div>
 
         <div class="options">
           <label for="remember">
