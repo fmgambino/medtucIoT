@@ -8,7 +8,13 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+$stmt = $pdo->prepare("SELECT * FROM devices WHERE user_id = ?");
+$stmt->execute([$_SESSION['user_id']]);
+$devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
 $userId = $_SESSION['user_id'];
+
 
 // Obtener nombre del archivo de imagen desde la DB
 $stmt = $pdo->prepare("SELECT profile_image FROM users WHERE id = ?");
