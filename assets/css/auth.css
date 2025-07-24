@@ -6,14 +6,14 @@
 
 body {
   padding-top: 30px;
-  background: #f6f5f7;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  font-family: 'Montserrat', sans-serif;
-  height: 100vh;
   margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-family: 'Montserrat', sans-serif;
+  background: #f6f5f7;
+  color: #333;
   transition: background 0.3s, color 0.3s;
 }
 
@@ -22,6 +22,7 @@ body.dark-mode {
   color: #f6f5f7;
 }
 
+/* Typography */
 h1 {
   font-weight: bold;
   margin: 50px 20px 10px 0px;
@@ -35,11 +36,12 @@ p {
   margin: 20px 0 30px;
 }
 
+/* Buttons */
 button {
   border-radius: 20px;
   border: 1px solid #ff4b2b;
   background-color: #ff4b2b;
-  color: #ffffff;
+  color: #fff;
   font-size: 12px;
   font-weight: bold;
   padding: 12px 45px;
@@ -59,25 +61,11 @@ button:focus {
 
 button.ghost {
   background-color: transparent;
-  border-color: #ffffff;
+  border-color: #fff;
 }
 
-
-form {
-  background-color: #ffffff;
-  /* display: flex; */
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  padding: 20px 10px 100px 20px;
-  /* height: 100%; */
-  text-align: center;
-  /* corrected border-radius */
-  border-radius: 0px 0px 0px 0px !important;
-}
-
-input,
-select {
+/* Inputs */
+input, select {
   background-color: #eee;
   border: none;
   padding: 12px 15px;
@@ -86,16 +74,13 @@ select {
   border-radius: 4px;
 }
 
-body.dark-mode form {
-  background-color: #2a2a2a;
-}
-
 body.dark-mode input,
 body.dark-mode select {
   background-color: #444;
   color: #fff;
 }
 
+/* Container */
 .container {
   background-color: #fff;
   border-radius: 10px;
@@ -105,25 +90,31 @@ body.dark-mode select {
   overflow: hidden;
   width: 100%;
   max-width: 900px;
-  min-height: 580px;
+  min-height: 100vh;
 }
 
+form {
+  background-color: #fff;
+  text-align: center;
+  padding: 60px 10px 100px 10px;
+}
+
+body.dark-mode form {
+  background-color: #2a2a2a;
+}
+
+/* Form Panels */
 .form-container {
   position: absolute;
   top: 0;
   height: 100%;
+  width: 50%;
   transition: all 0.6s ease-in-out;
 }
 
-.sign-in-container {
-  left: 0;
-  width: 50%;
-  z-index: 2;
-}
-
+.sign-in-container,
 .sign-up-container {
   left: 0;
-  width: 50%;
   z-index: 2;
 }
 
@@ -139,16 +130,11 @@ body.dark-mode select {
 }
 
 @keyframes show {
-  0% {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
+  0% { opacity: 0; transform: scale(0.95); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
+/* Overlay */
 .overlay-container {
   position: absolute;
   top: 0;
@@ -169,11 +155,11 @@ body.dark-mode select {
   background-repeat: no-repeat;
   background-size: cover;
   background-position: 0 0;
-  color: #ffffff;
   position: relative;
   left: -100%;
-  height: 100%;
   width: 200%;
+  height: 100%;
+  color: #fff;
   transform: translateX(0);
   transition: transform 0.6s ease-in-out;
 }
@@ -185,16 +171,14 @@ body.dark-mode select {
 .overlay-panel {
   position: absolute;
   display: flex;
-  align-items: center;
-  justify-content: center;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
   padding: 0 40px;
   text-align: center;
   top: 0;
-  height: 100%;
   width: 50%;
-  transform: translateX(0);
-  transition: transform 0.6s ease-in-out;
+  height: 100%;
 }
 
 .overlay-left {
@@ -214,50 +198,14 @@ body.dark-mode select {
   transform: translateX(20%);
 }
 
-.logo {
-  width: 360px;
-  margin-bottom: 15px;
+/* Scroll Fix */
+.form-container.sign-up-container {
+  overflow-y: auto;
+  max-height: 100vh;
+  min-height: 100vh;
 }
 
-.auth-footer {
-  text-align: center;
-  margin-top: 25px;
-  font-size: 13px;
-  color: inherit;
-  padding-bottom: 10px;
-}
-
-.auth-footer a {
-  color: #2196f3;
-  text-decoration: none;
-}
-
-.footer-controls {
-  margin-top: 10px;
-  display: flex;
-  justify-content: center;
-  gap: 18px;
-}
-
-.footer-controls button {
-  background: none;
-  border: none;
-  font-size: 20px;
-  cursor: pointer;
-  color: inherit;
-  transition: transform 0.2s ease;
-}
-
-.footer-controls button:hover {
-  transform: scale(1.2);
-}
-
-/* Dark mode overlay */
-body.dark-mode .overlay {
-  background: linear-gradient(to right, #0d47a1, #2196f3);
-}
-
-/* Password toggle */
+/* Password Toggle */
 .password-container {
   position: relative;
   width: 100%;
@@ -270,16 +218,42 @@ body.dark-mode .overlay {
   transform: translateY(-50%);
   background: none;
   border: none;
-  color: inherit;
   font-size: 1rem;
   cursor: pointer;
+  color: inherit;
 }
 
 body.dark-mode .toggle-password {
   color: #ddd;
 }
 
-/* Options: "Recuérdame" y "Olvidaste tu contraseña" */
+/* Logo */
+.logo {
+  width: 100%;
+  max-width: 200px;
+  height: auto;
+  margin-bottom: 20px;
+}
+
+/* Footer */
+.auth-footer {
+  text-align: center;
+  margin-top: 25px;
+  font-size: 13px;
+  padding-bottom: 10px;
+}
+
+.auth-footer a {
+  color: #2196f3;
+  text-decoration: none;
+}
+
+/* Dark Mode Overlay */
+body.dark-mode .overlay {
+  background: linear-gradient(to right, #0d47a1, #2196f3);
+}
+
+/* Options Row */
 .options {
   display: flex;
   justify-content: space-between;
@@ -289,7 +263,6 @@ body.dark-mode .toggle-password {
 }
 
 .options label {
-  padding-right: px;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -299,36 +272,9 @@ body.dark-mode .toggle-password {
   margin: 25px;
   text-decoration: none;
   color: inherit;
-  gap: 10px;
 }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .container {
-    width: 100%;
-    min-height: auto;
-    flex-direction: column;
-    box-shadow: none;
-    border-radius: 0;
-  }
-
-  .form-container,
-  .overlay-container {
-    width: 100%;
-    position: relative;
-    padding: 30px;
-  }
-
-  .overlay {
-    display: none;
-  }
-
-  form {
-    padding: 30px 20px;
-  }
-}
-
-/* === Switchers (modo oscuro y lenguaje) === */
+/* Header Controls */
 .top-controls {
   position: absolute;
   top: 20px;
@@ -340,9 +286,9 @@ body.dark-mode .toggle-password {
 
 .switch {
   position: relative;
-  display: inline-block;
   width: 48px;
   height: 26px;
+  display: inline-block;
 }
 
 .switch input {
@@ -353,11 +299,11 @@ body.dark-mode .toggle-password {
 
 .slider {
   position: absolute;
-  cursor: pointer;
   top: 0; left: 0; right: 0; bottom: 0;
   background-color: #ccc;
-  transition: background-color 0.4s;
   border-radius: 34px;
+  transition: background-color 0.4s;
+  cursor: pointer;
 }
 
 .slider:before {
@@ -367,12 +313,12 @@ body.dark-mode .toggle-password {
   width: 22px;
   left: 2px;
   bottom: 2px;
-  background-color: white;
-  transition: transform 0.4s ease;
-  border-radius: 50%;
+  background: white;
   text-align: center;
   line-height: 22px;
   font-size: 14px;
+  border-radius: 50%;
+  transition: transform 0.4s ease;
 }
 
 .switch input:checked + .slider {
@@ -399,8 +345,40 @@ body.dark-mode .toggle-password {
   background: rgba(255,255,255,0.1);
 }
 
-.form-container.sign-up-container {
-  overflow-y: auto !important;
-  max-height: 100vh !important;
-  min-height: 100vh !important;
+/* Responsive */
+@media (max-width: 768px) {
+  .container {
+    width: 100%;
+    min-height: auto;
+    flex-direction: column;
+    box-shadow: none;
+    border-radius: 0;
+  }
+
+  .form-container,
+  .overlay-container {
+    width: 100%;
+    position: relative;
+    padding: 30px;
+  }
+
+  .overlay {
+    display: none;
+  }
+
+  form {
+    padding: 30px 20px;
+  }
+
+  .logo {
+    max-width: 150px;
+    margin: 0 auto 15px;
+    display: block;
+  }
+
+  .top-controls {
+    position: static;
+    margin-top: 10px;
+    justify-content: center;
+  }
 }
