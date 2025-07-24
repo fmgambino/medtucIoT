@@ -3,7 +3,6 @@
 session_start();
 require __DIR__ . '/config.php';
 
-// Si ya está autenticado, redirige al dashboard
 if (isset($_SESSION['user_id'])) {
     header('Location: ' . BASE_PATH . '/dashboard');
     exit;
@@ -12,32 +11,33 @@ if (isset($_SESSION['user_id'])) {
 $error = $_GET['error'] ?? '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');  // aquí username en realidad es el correo
+    $username = trim($_POST['username'] ?? '');
     $password = trim($_POST['password'] ?? '');
+    $captchaResponse = $_POST['g-recaptcha-response'] ?? '';
 
-    if ($username === '' || $password === '') {
+    if (empty($username) || empty($password) || empty($captchaResponse)) {
         header('Location: ' . BASE_PATH . '/login?error=campos');
         exit;
     }
 
+    // Verificar reCAPTCHA
+    $secretKey = '6LcVI44rAAAAAJ3hKeeGXGrnAGdJ2ETm_KahqkYY'; // Sustituye esto con tu clave secreta
+    $verify = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$secretKey}&response={$captchaResponse}");
+    $captchaSuccess = json_decode($verify);
+
+    if (!$captchaSuccess->success) {
+        header('Location: ' . BASE_PATH . '/login?error=captcha');
+        exit;
+    }
+
     try {
-        // Cambiado para buscar por email en lugar de por username
-        $stmt = $pdo->prepare(
-            "SELECT 
-                id, 
-                email AS username, 
-                password_hash, 
-                role, 
-                profile_image
-             FROM users 
-             WHERE email = ?"
-        );
+        $stmt = $pdo->prepare("SELECT id, email AS username, password_hash, role, profile_image FROM users WHERE email = ?");
         $stmt->execute([$username]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user && password_verify($password, $user['password_hash'])) {
             $_SESSION['user_id']       = $user['id'];
-            $_SESSION['user_name']     = $user['username'];        // será el email
+            $_SESSION['user_name']     = $user['username'];
             $_SESSION['role']          = $user['role'];
             $_SESSION['profile_image'] = $user['profile_image'];
             header('Location: ' . BASE_PATH . '/dashboard');
@@ -62,33 +62,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link rel="stylesheet" href="assets/css/auth.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
   <div class="container">
     <div class="form-container sign-in-container">
       <form action="login" method="POST">
         <h1>Iniciar sesión</h1>
-        <input type="text" name="username" placeholder="Usuario" required>
+        <input type="email" name="username" placeholder="Correo electrónico" required>
         <div class="password-container">
           <input type="password" id="password" name="password" placeholder="Contraseña" required>
           <button type="button" id="togglePassword" class="toggle-password" aria-label="Mostrar contraseña">
             <i id="toggleIcon" class="fa fa-eye"></i>
           </button>
         </div>
+
+        <div class="g-recaptcha" data-sitekey="6LcVI44rAAAAAC3uIKeD_QMXZpvWIF8QBT5oLGrA"></div>
+
         <div class="options">
-          <label>
-            <input type="checkbox" name="remember"> Recuérdame
-          </label>
-          <a href="register" class="forgot-password">¿Nuevo aquí? Regístrate</a>
+          <label><input type="checkbox" name="remember"> Recuérdame</label>
+          <a href="#" onclick="showRecovery()" class="forgot-password">¿Olvidaste tu contraseña?</a>
         </div>
+
         <button type="submit" class="btn">Ingresar</button>
       </form>
+
       <?php if ($error): ?>
         <script>
           const messages = {
-            campos:   'Por favor, completa todos los campos.',
+            campos:   'Por favor, completa todos los campos y verifica el captcha.',
             invalid:  'Correo o contraseña incorrectos.',
-            db:       'Error de conexión con la base de datos.'
+            db:       'Error de conexión con la base de datos.',
+            captcha:  'Por favor, verifica que no eres un robot.'
           };
           Swal.fire({
             icon: 'error',
@@ -98,6 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </script>
       <?php endif; ?>
     </div>
+
     <div class="overlay-container">
       <div class="overlay">
         <div class="top-controls">
@@ -123,23 +129,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <script src="assets/js/auth.js"></script>
   <script>
-    document.getElementById('togglePassword').addEventListener('click', function() {
-      const pwd  = document.getElementById('password');
+    document.getElementById('togglePassword').addEventListener('click', function () {
+      const pwd = document.getElementById('password');
       const icon = document.getElementById('toggleIcon');
       if (pwd.type === 'password') {
         pwd.type = 'text';
-        icon.classList.replace('fa-eye','fa-eye-slash');
-        this.setAttribute('aria-label','Ocultar contraseña');
+        icon.classList.replace('fa-eye', 'fa-eye-slash');
+        this.setAttribute('aria-label', 'Ocultar contraseña');
       } else {
         pwd.type = 'password';
-        icon.classList.replace('fa-eye-slash','fa-eye');
-        this.setAttribute('aria-label','Mostrar contraseña');
+        icon.classList.replace('fa-eye-slash', 'fa-eye');
+        this.setAttribute('aria-label', 'Mostrar contraseña');
       }
     });
 
     function toggleLanguage() {
-      // Implementa cambio de idioma (ej. guardando en localStorage y recargando)
-      alert('Toggle language (implementar)');
+      alert('Funcionalidad de cambio de idioma en desarrollo');
+    }
+
+    function showRecovery() {
+      Swal.fire({
+        title: 'Recuperar acceso',
+        html: `
+          <input type="email" id="recoveryEmail" class="swal2-input" placeholder="Correo electrónico">
+        `,
+        confirmButtonText: 'Enviar',
+        focusConfirm: false,
+        preConfirm: () => {
+          const email = Swal.getPopup().querySelector('#recoveryEmail').value;
+          if (!email) {
+            Swal.showValidationMessage('Por favor, introduce tu correo');
+          }
+          return email;
+        }
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch('recuperar_acceso.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: result.value })
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success) {
+              Swal.fire('✅ Listo', data.message, 'success');
+            } else {
+              Swal.fire('⚠️ Error', data.message, 'error');
+            }
+          })
+          .catch(() => {
+            Swal.fire('Error', 'No se pudo completar la solicitud', 'error');
+          });
+        }
+      });
     }
   </script>
 </body>
