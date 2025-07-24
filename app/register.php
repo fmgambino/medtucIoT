@@ -66,94 +66,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hashed
         ]);
 
+        // Enviar correo de bienvenida
         $subject = "Bienvenido a MedTuCIoT";
         $loginUrl = "https://medtuc.electronicagambino.com/login";
         $logoUrl  = "https://www.educaciontuc.gov.ar/wp-content/uploads/2024/10/mnisteriodeeducacion.webp";
 
         $message = '
-        <html>
-          <head>
-<style>
-  /* Asegura scroll interno para panel izquierdo */
-  .form-container.sign-up-container,
-  .form-container.sign-in-container {
-    overflow-y: auto;
-    max-height: 100vh;
-    padding: 30px 20px;
-  }
-
-  /* Logo siempre visible y adaptado */
-  .overlay-panel .logo {
-    width: 260px;
-    max-width: 100%;
-    height: auto;
-    margin-bottom: 10px;
-  }
-
-  /* Modo responsive: mostrar panel completo y controles arriba */
-  @media (max-width: 768px) {
-    .overlay {
-      display: none;
-    }
-
-    .form-container {
-      width: 100% !important;
-      position: relative;
-      padding: 30px 20px;
-    }
-
-    .top-controls {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      display: flex;
-      gap: 10px;
-      z-index: 20;
-    }
-
-    .logo {
-      max-width: 160px;
-      height: auto;
-      display: block;
-      margin: 20px auto 10px;
-    }
-  }
-
-  /* Asegura visibilidad en pantallas más pequeñas */
-  html, body {
-    height: 100%;
-    overflow: hidden;
-  }
-
-  .container {
-    height: 100vh;
-    overflow: hidden;
-  }
-</style>
-
-          </head>
-          <body>
-            <div class="email-container">
-              <img class="email-logo" src="' . $logoUrl . '" alt="Ministerio de Educación de Tucumán">
-              <h1>¡Bienvenido a MedTuCIoT, ' . htmlspecialchars($first_name . ' ' . $last_name) . '!</h1>
-              <p>Gracias por registrarte en nuestra plataforma de monitoreo y control IoT educativo.</p>
-              <p>Ahora puedes acceder a tu panel de usuario y comenzar a gestionar tus dispositivos conectados de forma eficiente.</p>
-              <a class="login-button" href="' . $loginUrl . '">Iniciar Sesión</a>
-              <div class="footer">
-                Ministerio de Educación de Tucumán - Plataforma MedTuCIoT<br>
-                © ' . date('Y') . ' Electrónica Gambino
-              </div>
-            </div>
-          </body>
-        </html>
-        ';
+        <html><head><style>
+          body { font-family: Arial, sans-serif; background-color: #f9f9f9; color: #333; }
+          .email-container {
+            max-width: 600px; margin: auto; background: #fff; padding: 30px;
+            border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); text-align: center;
+          }
+          .email-logo { max-width: 200px; margin-bottom: 20px; }
+          h1 { color: #003366; }
+          .login-button {
+            display: inline-block; margin-top: 25px; padding: 12px 25px;
+            background-color: #0073e6; color: #fff; text-decoration: none;
+            font-weight: bold; border-radius: 6px;
+          }
+        </style></head><body>
+        <div class="email-container">
+          <img class="email-logo" src="' . $logoUrl . '" alt="Ministerio de Educación de Tucumán">
+          <h1>¡Bienvenido a MedTuCIoT, ' . htmlspecialchars("$first_name $last_name") . '!</h1>
+          <p>Gracias por registrarte en nuestra plataforma de monitoreo y control IoT educativo.</p>
+          <p>Ahora puedes iniciar sesión y comenzar a trabajar.</p>
+          <a class="login-button" href="' . $loginUrl . '">Iniciar Sesión</a>
+        </div>
+        </body></html>';
 
         $headers  = "MIME-Version: 1.0\r\n";
         $headers .= "Content-type: text/html; charset=UTF-8\r\n";
         $headers .= "From: MedTuCIoT <no-reply@medtuc.electronicagambino.com>\r\n";
 
         @mail($email, $subject, $message, $headers);
-
         header("Location: {$baseUrl}/register?success=1");
         exit;
 
@@ -175,25 +121,19 @@ function validateCaptcha($captcha) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <base href="<?= htmlspecialchars(BASE_PATH) ?>">
+  <base href="<?= htmlspecialchars(BASE_PATH) ?>/">
   <title data-i18n="register">Registro - MedTuCIoT</title>
   <link rel="stylesheet" href="assets/css/auth.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-  <style>
-    .form-container.sign-up-container {
-      overflow-y: auto !important;
-      max-height: 100vh !important;
-      padding-bottom: 20px;
-    }
-  </style>
 </head>
 <body>
   <div class="container">
     <div class="form-container sign-up-container">
-      <form action="register" method="POST">
-        <h1 data-i18n="register">Crear cuenta</h1>
+      <form action="register" method="POST" novalidate>
+        <img class="logo" src="assets/img/logo-dark.png" alt="Logo MedTuCIoT">
+        <h1 data-i18n="register">Registrarse</h1>
         <div class="form-row">
           <input type="text" name="first_name" placeholder="Nombre" required>
           <input type="text" name="last_name" placeholder="Apellido" required>
@@ -214,26 +154,20 @@ function validateCaptcha($captcha) {
         <input type="password" name="confirm_password" placeholder="Confirmar Contraseña" required>
         <div class="g-recaptcha" data-sitekey="6Les8I0rAAAAABX5jxa83mh6b78OVEWJuvn5qU3C"></div>
         <div class="options">
-          <label for="remember">
-            <input type="checkbox" id="remember" name="remember">
-            <span data-i18n="remember">Recuérdame</span>
-          </label>
+          <label><input type="checkbox" name="remember"> <span data-i18n="remember">Recuérdame</span></label>
           <a href="login" class="forgot-password" data-i18n="haveAccount">¿Ya tienes cuenta?</a>
         </div>
         <button type="submit" class="btn" data-i18n="register">Registrarse</button>
       </form>
-
       <?php if ($success): ?>
-        <script>
-          Swal.fire({ icon: 'success', title: '✔️', text: 'Registro exitoso. ¡Bienvenido!' });
-        </script>
+        <script>Swal.fire({ icon: 'success', title: '✔️', text: 'Registro exitoso. ¡Bienvenido!' });</script>
       <?php elseif ($error): ?>
         <script>
           const msgs = {
             campos: 'Por favor, completa todos los campos.',
             exists: 'El correo o usuario ya está registrado.',
             passwords_no_match: 'Las contraseñas no coinciden.',
-            db:     'Error de conexión con la base de datos.',
+            db: 'Error de conexión con la base de datos.',
             captcha: 'Captcha inválido. Intenta nuevamente.'
           };
           Swal.fire({ icon: 'error', title: '❌', text: msgs['<?= addslashes($error) ?>'] ?? 'Error desconocido' });
@@ -244,9 +178,7 @@ function validateCaptcha($captcha) {
     <div class="overlay-container">
       <div class="overlay">
         <div class="top-controls">
-          <label class="switch" title="Cambiar tema">
-            <input type="checkbox" id="themeSwitcher"><span class="slider"></span>
-          </label>
+          <label class="switch" title="Cambiar tema"><input type="checkbox" id="themeSwitcher"><span class="slider"></span></label>
           <button class="lang-toggle" onclick="toggleLanguage()" title="Cambiar idioma">🇪🇸/🇺🇸</button>
         </div>
         <div class="overlay-panel overlay-right">
@@ -273,10 +205,6 @@ function validateCaptcha($captcha) {
       icon.classList.toggle('fa-eye');
       icon.classList.toggle('fa-eye-slash');
     });
-
-    function toggleLanguage() {
-      alert('Cambiar idioma: función por implementar');
-    }
   </script>
 </body>
 </html>
