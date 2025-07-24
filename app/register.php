@@ -1,5 +1,4 @@
 <?php
-// /app/register.php
 session_start();
 require __DIR__ . '/config.php';
 
@@ -16,26 +15,26 @@ $success = isset($_GET['success']);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $first_name = trim($_POST['first_name'] ?? '');
     $last_name  = trim($_POST['last_name']  ?? '');
+    $username   = trim($_POST['username']   ?? '');
     $country    = trim($_POST['country']    ?? '');
     $province   = trim($_POST['province']   ?? '');
     $city       = trim($_POST['city']       ?? '');
     $email      = trim($_POST['email']      ?? '');
-    $username   = trim($_POST['username']   ?? '');
     $password   = trim($_POST['password']   ?? '');
     $confirm_password = trim($_POST['confirm_password'] ?? '');
-    $captcha    = $_POST['captcha'] ?? '';
+    $captcha_response = $_POST['g-recaptcha-response'] ?? '';
 
-    if ($first_name === '' || $last_name === '' || $country === '' || $email === '' || $password === '' || $username === '') {
+    if ($first_name === '' || $last_name === '' || $username === '' || $country === '' || $email === '' || $password === '') {
         header("Location: {$baseUrl}/register?error=campos");
         exit;
     }
 
     if ($password !== $confirm_password) {
-        header("Location: {$baseUrl}/register?error=passwords_no_match");
+        header("Location: {$baseUrl}/register?error=match");
         exit;
     }
 
-    if (empty($captcha) || !validateCaptcha($captcha)) {
+    if (empty($captcha_response) || !validateCaptcha($captcha_response)) {
         header("Location: {$baseUrl}/register?error=captcha");
         exit;
     }
@@ -67,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hashed
         ]);
 
-        // Email de bienvenida (HTML)
+        // Email HTML de bienvenida
         $subject = "Bienvenido a MedTuCIoT";
         $loginUrl = "https://medtuc.electronicagambino.com/login";
         $logoUrl  = "https://www.educaciontuc.gov.ar/wp-content/uploads/2024/10/mnisteriodeeducacion.webp";
@@ -97,8 +96,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
               <img class="email-logo" src="' . $logoUrl . '" alt="Ministerio de Educación de Tucumán">
               <h1>¡Bienvenido a MedTuCIoT, ' . htmlspecialchars($first_name . ' ' . $last_name) . '!</h1>
               <p>Gracias por registrarte en nuestra plataforma de monitoreo y control IoT educativo.</p>
-              <p>A partir de ahora podrás acceder a tu panel de usuario y comenzar a gestionar tus dispositivos conectados de forma eficiente.</p>
-              <p>Haz clic en el siguiente botón para iniciar sesión:</p>
+              <p>Ahora puedes acceder a tu panel de usuario y comenzar a gestionar tus dispositivos conectados de forma eficiente.</p>
               <a class="login-button" href="' . $loginUrl . '">Iniciar Sesión</a>
               <div class="footer">
                 Ministerio de Educación de Tucumán - Plataforma MedTuCIoT<br>
@@ -125,10 +123,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 function validateCaptcha($captcha) {
-    $secretKey = 'TU_SECRET_KEY';  // Sustituye con tu Secret Key
+    $secretKey = 'TU_SECRET_KEY'; // ← Sustituye con tu clave secreta de reCAPTCHA
     $response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$secretKey}&response={$captcha}");
-    $responseKeys = json_decode($response, true);
-    return intval($responseKeys["success"]) === 1;
+    $result = json_decode($response, true);
+    return $result['success'] ?? false;
 }
 ?>
 
@@ -142,7 +140,6 @@ function validateCaptcha($captcha) {
   <link rel="stylesheet" href="assets/css/auth.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- Agregar el script de Google reCAPTCHA -->
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
@@ -156,12 +153,9 @@ function validateCaptcha($captcha) {
           <input type="text" name="last_name" placeholder="Apellido" required>
         </div>
 
-        <!-- Campo para usuario (nickname) -->
         <input type="text" name="username" placeholder="Usuario (nombre de usuario)" required>
-
         <select name="country" id="country" required>
           <option value="" data-i18n="country">País</option>
-          <!-- Opcional: Poblar vía JS -->
         </select>
 
         <input type="text" name="province" placeholder="Provincia / Estado">
@@ -175,14 +169,9 @@ function validateCaptcha($captcha) {
           </button>
         </div>
 
-        <div class="password-container">
-          <input type="password" name="confirm_password" placeholder="Confirmar Contraseña" required>
-        </div>
+        <input type="password" name="confirm_password" placeholder="Confirmar Contraseña" required>
 
-        <!-- ReCAPTCHA -->
-        <div class="captcha-container">
-          <div class="g-recaptcha" data-sitekey="TU_SITE_KEY"></div>
-        </div>
+        <div class="g-recaptcha" data-sitekey="TU_SITE_KEY"></div> <!-- Sustituye con tu site key -->
 
         <div class="options">
           <label for="remember">
@@ -203,10 +192,10 @@ function validateCaptcha($captcha) {
         <script>
           const msgs = {
             campos: 'Por favor, completa todos los campos.',
-            exists: 'El correo ya está registrado.',
-            passwords_no_match: 'Las contraseñas no coinciden.',
-            db:     'Error de conexión con la base de datos.',
-            captcha: 'Captcha no válido.'
+            exists: 'El correo o usuario ya está registrado.',
+            db: 'Error de conexión con la base de datos.',
+            captcha: 'Captcha inválido. Intenta nuevamente.',
+            match: 'Las contraseñas no coinciden.'
           };
           Swal.fire({ icon: 'error', title: '❌', text: msgs['<?= addslashes($error) ?>'] ?? 'Error desconocido' });
         </script>
@@ -230,28 +219,24 @@ function validateCaptcha($captcha) {
       </div>
     </div>
   </div>
+
   <div class="auth-footer">
     <span data-i18n="footer">Bienvenido a MedTuCIoT.</span><br>
     <span data-i18n="powered">Powered by</span> <a href="https://electronicagambino.com" target="_blank">Electrónica Gambino</a>
   </div>
+
   <script src="assets/js/auth.js"></script>
   <script>
-    document.getElementById('togglePassword').addEventListener('click', function() {
-      const pwd  = document.getElementById('password');
+    document.getElementById('togglePassword').addEventListener('click', function () {
+      const pwd = document.getElementById('password');
       const icon = document.getElementById('toggleIcon');
-      if (pwd.type === 'password') {
-        pwd.type = 'text';
-        icon.classList.replace('fa-eye','fa-eye-slash');
-        this.setAttribute('aria-label','Ocultar contraseña');
-      } else {
-        pwd.type = 'password';
-        icon.classList.replace('fa-eye-slash','fa-eye');
-        this.setAttribute('aria-label','Mostrar contraseña');
-      }
+      pwd.type = pwd.type === 'password' ? 'text' : 'password';
+      icon.classList.toggle('fa-eye');
+      icon.classList.toggle('fa-eye-slash');
     });
 
     function toggleLanguage() {
-      alert('Toggle language (implementar)');
+      alert('Cambiar idioma: función por implementar');
     }
   </script>
 </body>
