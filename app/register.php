@@ -105,6 +105,7 @@ function sendWelcomeEmail($email, $first_name, $last_name) {
     @mail($email, $subject, $message, $headers);
 }
 ?>
+<!-- ... encabezado PHP antes del HTML ... -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -121,15 +122,16 @@ function sendWelcomeEmail($email, $first_name, $last_name) {
   <div class="container">
     <div class="form-container sign-up-container">
       <form action="register" method="POST" novalidate>
-        <img class="logo" src="assets/img/logo-dark.png" alt="Logo MedTuCIoT">
+        <!-- Logo solo para móviles -->
+        <img class="logo mobile-only" src="assets/img/logo-dark.png" alt="Logo MedTuCIoT">
+        
         <h1>Registrarse</h1>
         <div class="form-row">
           <input type="text" name="first_name" placeholder="Nombre" required>
           <input type="text" name="last_name" placeholder="Apellido" required>
         </div>
-        <select name="country" required>
+        <select name="country" id="country-select" required>
           <option value="">País</option>
-          <!-- Cargar países desde JS o backend -->
         </select>
         <input type="text" name="province" placeholder="Provincia / Estado">
         <input type="text" name="city" placeholder="Ciudad">
@@ -137,10 +139,13 @@ function sendWelcomeEmail($email, $first_name, $last_name) {
         <input type="text" name="username" placeholder="Usuario" required>
         <div class="password-container">
           <input type="password" id="password" name="password" placeholder="Contraseña" required>
-          <button type="button" id="togglePassword" class="toggle-password"><i id="toggleIcon" class="fa fa-eye"></i></button>
+          <button type="button" id="togglePassword" class="toggle-password" aria-label="Mostrar contraseña">
+            <i id="toggleIcon" class="fa fa-eye"></i>
+          </button>
         </div>
         <input type="password" name="confirm_password" placeholder="Confirmar contraseña" required>
         <div class="g-recaptcha" data-sitekey="6LcVI44rAAAAAC3uIKeD_QMXZpvWIF8QBT5oLGrA"></div>
+
         <div class="options">
           <label><input type="checkbox" name="remember"> Recuérdame</label>
           <a href="login">¿Ya tienes una cuenta?</a>
@@ -172,7 +177,8 @@ function sendWelcomeEmail($email, $first_name, $last_name) {
           <button class="lang-toggle" onclick="toggleLanguage()">🇪🇸/🇺🇸</button>
         </div>
         <div class="overlay-panel overlay-right">
-          <img class="logo" src="assets/img/logo-dark.png" alt="Logo MedTuCIoT">
+          <!-- Logo visible solo en escritorio -->
+          <img class="logo desktop-only" src="assets/img/logo-dark.png" alt="Logo MedTuCIoT">
           <h1>¿Ya tienes cuenta?</h1>
           <p>Inicia sesión para acceder al dashboard</p>
           <a href="login"><button class="ghost">Iniciar Sesión</button></a>
@@ -187,6 +193,7 @@ function sendWelcomeEmail($email, $first_name, $last_name) {
 
   <script src="assets/js/auth.js"></script>
   <script>
+    // Alternar visibilidad de contraseña
     document.getElementById('togglePassword').addEventListener('click', function () {
       const pwd = document.getElementById('password');
       const icon = document.getElementById('toggleIcon');
@@ -195,9 +202,27 @@ function sendWelcomeEmail($email, $first_name, $last_name) {
       icon.classList.toggle('fa-eye-slash');
     });
 
+    // Toggle idioma
     function toggleLanguage() {
       alert('Funcionalidad de idioma próximamente');
     }
+
+    // Cargar países dinámicamente desde la API
+    fetch('https://restcountries.com/v3.1/all')
+      .then(response => response.json())
+      .then(data => {
+        const select = document.getElementById('country-select');
+        const countries = data.map(c => c.translations?.spa?.common || c.name.common).sort();
+        countries.forEach(name => {
+          const option = document.createElement('option');
+          option.value = name;
+          option.textContent = name;
+          select.appendChild(option);
+        });
+      }).catch(error => {
+        console.error('Error cargando países:', error);
+      });
   </script>
 </body>
 </html>
+

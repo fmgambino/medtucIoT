@@ -369,3 +369,21 @@ body.dark-mode .toggle-password {
     margin-bottom: 15px;
   }
 }
+
+/* Mostrar solo en móviles */
+.mobile-only {
+  display: none;
+}
+
+.desktop-only {
+  display: block;
+}
+
+@media (max-width: 768px) {
+  .mobile-only {
+    display: block !important;
+  }
+  .desktop-only {
+    display: none !important;
+  }
+}
