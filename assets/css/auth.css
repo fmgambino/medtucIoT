@@ -117,25 +117,25 @@ body.dark-mode form {
   height: 100%;
   padding: 40px 20px 60px;
   background-color: #fff;
-  overflow-y: auto;            /* Habilita scroll si el contenido excede */
+  overflow-y: auto !important;         /* Permite scroll si es necesario */
   transition: all 0.6s ease-in-out;
   z-index: 2;
+  -webkit-overflow-scrolling: touch;   /* Soporte para scroll suave en iOS */
 }
 
-/* Contenedor Sign In / Sign Up (comparten posición base) */
+/* Contenedor Sign In / Sign Up */
 .sign-in-container,
 .sign-up-container {
-  left: 0;
   z-index: 2;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto !important;         /* Refuerzo adicional */
+  max-height: 100vh;
+  padding-bottom: 40px;
 }
 
-/* Ajustes específicos para Sign Up */
-.sign-up-container {
-  max-height: 100vh;           /* Limita la altura máxima al alto de pantalla */
-  padding-bottom: 40px;        /* Espacio para el botón final o footer */
-}
-
-/* Animaciones y transición entre paneles */
+/* Panel activo (animaciones) */
 .container.right-panel-active .sign-in-container {
   transform: translateX(100%);
 }
