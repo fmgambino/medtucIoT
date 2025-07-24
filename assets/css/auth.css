@@ -15,8 +15,9 @@ body {
   flex-direction: column;
   align-items: center;
   padding-top: 30px;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  height: auto;
+  overflow-y: auto;
 }
 
 body.dark-mode {
@@ -92,7 +93,8 @@ body.dark-mode select {
   overflow: hidden;
   width: 100%;
   max-width: 900px;
-  height: 100vh;
+  height: auto;       /* 🔁 en lugar de height: 100vh */
+  min-height: 100vh;  /* ✅ asegura altura completa */
   display: flex;
 }
 

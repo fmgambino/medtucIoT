@@ -105,7 +105,7 @@ function sendWelcomeEmail($email, $first_name, $last_name) {
     @mail($email, $subject, $message, $headers);
 }
 ?>
-<!-- ... encabezado PHP antes del HTML ... -->
+<!-- ... encabezado del HTML ... -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -130,9 +130,10 @@ function sendWelcomeEmail($email, $first_name, $last_name) {
           <input type="text" name="first_name" placeholder="Nombre" required>
           <input type="text" name="last_name" placeholder="Apellido" required>
         </div>
-        <select name="country" id="country-select" required>
+        <select name="country" id="country" required>
           <option value="">País</option>
         </select>
+
         <input type="text" name="province" placeholder="Provincia / Estado">
         <input type="text" name="city" placeholder="Ciudad">
         <input type="email" name="email" placeholder="Correo electrónico" required>
@@ -207,21 +208,23 @@ function sendWelcomeEmail($email, $first_name, $last_name) {
       alert('Funcionalidad de idioma próximamente');
     }
 
-    // Cargar países dinámicamente desde la API
-    fetch('https://restcountries.com/v3.1/all')
-      .then(response => response.json())
-      .then(data => {
-        const select = document.getElementById('country-select');
-        const countries = data.map(c => c.translations?.spa?.common || c.name.common).sort();
-        countries.forEach(name => {
+  async function loadCountries() {
+    const select = document.getElementById('country');
+    try {
+      const res = await fetch('https://restcountries.com/v3.1/all');
+      const countries = await res.json();
+
+      countries
+        .sort((a, b) => a.name.common.localeCompare(b.name.common))
+        .forEach(country => {
           const option = document.createElement('option');
-          option.value = name;
-          option.textContent = name;
+          option.value = country.name.common;
+          option.textContent = country.name.common;
           select.appendChild(option);
         });
-      }).catch(error => {
-        console.error('Error cargando países:', error);
-      });
+    } catch (err) {
+      console.error('No se pudo cargar la lista de países:', err);
+    }
   </script>
 </body>
 </html>
