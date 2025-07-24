@@ -128,7 +128,6 @@ function validateCaptcha($captcha) {
     return $result['success'] ?? false;
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -153,33 +152,25 @@ function validateCaptcha($captcha) {
     <div class="form-container sign-up-container">
       <form action="register" method="POST">
         <h1 data-i18n="register">Crear cuenta</h1>
-
         <div class="form-row">
           <input type="text" name="first_name" placeholder="Nombre" required>
           <input type="text" name="last_name" placeholder="Apellido" required>
         </div>
-
-        <input type="text" name="username" placeholder="Usuario (nombre de usuario)" required>
-
         <select name="country" id="country" required>
           <option value="" data-i18n="country">País</option>
         </select>
-
         <input type="text" name="province" placeholder="Provincia / Estado">
         <input type="text" name="city" placeholder="Ciudad">
         <input type="email" name="email" placeholder="Correo electrónico" required autocomplete="email">
-
+        <input type="text" name="username" placeholder="Usuario (nombre de usuario)" required>
         <div class="password-container">
           <input type="password" id="password" name="password" placeholder="Contraseña" required autocomplete="new-password">
           <button type="button" id="togglePassword" class="toggle-password" aria-label="Mostrar contraseña">
             <i id="toggleIcon" class="fa fa-eye"></i>
           </button>
         </div>
-
         <input type="password" name="confirm_password" placeholder="Confirmar Contraseña" required>
-
         <div class="g-recaptcha" data-sitekey="6Les8I0rAAAAABX5jxa83mh6b78OVEWJuvn5qU3C"></div>
-
         <div class="options">
           <label for="remember">
             <input type="checkbox" id="remember" name="remember">
@@ -187,7 +178,6 @@ function validateCaptcha($captcha) {
           </label>
           <a href="login" class="forgot-password" data-i18n="haveAccount">¿Ya tienes cuenta?</a>
         </div>
-
         <button type="submit" class="btn" data-i18n="register">Registrarse</button>
       </form>
 
