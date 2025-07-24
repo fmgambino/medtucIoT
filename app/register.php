@@ -83,20 +83,33 @@ function sendWelcomeEmail($email, $first_name, $last_name) {
     $loginUrl = "https://medtuc.electronicagambino.com/login";
     $logoUrl  = "https://www.educaciontuc.gov.ar/wp-content/uploads/2024/10/mnisteriodeeducacion.webp";
 
-    $message = "
-    <html><head><style>
+$message = "
+<html>
+<head>
+  <style>
     body { font-family: Arial, sans-serif; background: #f9f9f9; color: #333; }
     .email-container { max-width: 600px; margin: auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); text-align: center; }
     .email-logo { max-width: 200px; margin-bottom: 20px; }
     h1 { color: #003366; }
-    .login-button { margin-top: 25px; padding: 12px 25px; background: #0073e6; color: #fff; text-decoration: none; font-weight: bold; border-radius: 6px; }
-    </style></head><body>
-    <div class='email-container'>
-      <img class='email-logo' src='{$logoUrl}' alt='Ministerio de Educación'>
-      <h1>¡Bienvenido a MedTuCIoT, {$first_name} {$last_name}!</h1>
-      <p>Gracias por registrarte. Puedes iniciar sesión ahora:</p>
-      <a class='login-button' href='{$loginUrl}'>Iniciar Sesión</a>
-    </div></body></html>";
+    .login-button { margin-top: 25px; padding: 12px 25px; background: #0073e6; color: #fff; text-decoration: none; font-weight: bold; border-radius: 6px; display: inline-block; }
+  </style>
+</head>
+<body>
+  <div class='email-container'>
+    <img class='email-logo' src='{$logoUrl}' alt='Ministerio de Educación'>
+    <h1>¡Bienvenido a MedTuCIoT, {$first_name} {$last_name}!</h1>
+    <p>Gracias por registrarte en nuestra plataforma de monitoreo y control IoT educativo.</p>
+    <p>A partir de ahora podrás acceder a tu panel de usuario y comenzar a gestionar tus dispositivos conectados de forma eficiente y segura.</p>
+    <p>Haz clic en el siguiente botón para iniciar sesión:</p>
+    <a class='login-button' href='{$loginUrl}'>Iniciar Sesión</a>
+    <p style='margin-top: 40px; font-size: 0.9em; color: #666;'>
+      Ministerio de Educación de Tucumán – Plataforma MedTuCIoT<br>
+      © 2025 Electrónica Gambino
+    </p>
+  </div>
+</body>
+</html>";
+
 
     $headers  = "MIME-Version: 1.0\r\n";
     $headers .= "Content-type: text/html; charset=UTF-8\r\n";
