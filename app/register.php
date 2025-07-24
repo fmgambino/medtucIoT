@@ -20,16 +20,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $province   = trim($_POST['province']   ?? '');
     $city       = trim($_POST['city']       ?? '');
     $email      = trim($_POST['email']      ?? '');
+    $username   = trim($_POST['username']   ?? '');
     $password   = trim($_POST['password']   ?? '');
+    $confirm_password = trim($_POST['confirm_password'] ?? '');
+    $captcha    = $_POST['captcha'] ?? '';
 
-    if ($first_name === '' || $last_name === '' || $country === '' || $email === '' || $password === '') {
+    if ($first_name === '' || $last_name === '' || $country === '' || $email === '' || $password === '' || $username === '') {
         header("Location: {$baseUrl}/register?error=campos");
         exit;
     }
 
+    if ($password !== $confirm_password) {
+        header("Location: {$baseUrl}/register?error=passwords_no_match");
+        exit;
+    }
+
+    if (empty($captcha) || !validateCaptcha($captcha)) {
+        header("Location: {$baseUrl}/register?error=captcha");
+        exit;
+    }
+
     try {
-        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
-        $stmt->execute([$email]);
+        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ? OR username = ?");
+        $stmt->execute([$email, $username]);
         if ($stmt->fetch()) {
             header("Location: {$baseUrl}/register?error=exists");
             exit;
@@ -50,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $province,
             $city,
             $email,
-            $email,
+            $username,
             $hashed
         ]);
 
@@ -82,7 +95,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <body>
             <div class="email-container">
               <img class="email-logo" src="' . $logoUrl . '" alt="Ministerio de Educación de Tucumán">
-              <h1>¡Bienvenido a MedTuCIoT, ' . htmlspecialchars($first_name) . '!</h1>
+              <h1>¡Bienvenido a MedTuCIoT, ' . htmlspecialchars($first_name . ' ' . $last_name) . '!</h1>
               <p>Gracias por registrarte en nuestra plataforma de monitoreo y control IoT educativo.</p>
               <p>A partir de ahora podrás acceder a tu panel de usuario y comenzar a gestionar tus dispositivos conectados de forma eficiente.</p>
               <p>Haz clic en el siguiente botón para iniciar sesión:</p>
@@ -110,6 +123,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 }
+
+function validateCaptcha($captcha) {
+    $secretKey = 'TU_SECRET_KEY';  // Sustituye con tu Secret Key
+    $response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$secretKey}&response={$captcha}");
+    $responseKeys = json_decode($response, true);
+    return intval($responseKeys["success"]) === 1;
+}
 ?>
 
 <!DOCTYPE html>
@@ -122,6 +142,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link rel="stylesheet" href="assets/css/auth.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- Agregar el script de Google reCAPTCHA -->
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 <body>
   <div class="container">
@@ -133,6 +155,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <input type="text" name="first_name" placeholder="Nombre" required>
           <input type="text" name="last_name" placeholder="Apellido" required>
         </div>
+
+        <!-- Campo para usuario (nickname) -->
+        <input type="text" name="username" placeholder="Usuario (nombre de usuario)" required>
 
         <select name="country" id="country" required>
           <option value="" data-i18n="country">País</option>
@@ -148,6 +173,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <button type="button" id="togglePassword" class="toggle-password" aria-label="Mostrar contraseña">
             <i id="toggleIcon" class="fa fa-eye"></i>
           </button>
+        </div>
+
+        <div class="password-container">
+          <input type="password" name="confirm_password" placeholder="Confirmar Contraseña" required>
+        </div>
+
+        <!-- ReCAPTCHA -->
+        <div class="captcha-container">
+          <div class="g-recaptcha" data-sitekey="TU_SITE_KEY"></div>
         </div>
 
         <div class="options">
@@ -170,7 +204,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           const msgs = {
             campos: 'Por favor, completa todos los campos.',
             exists: 'El correo ya está registrado.',
-            db:     'Error de conexión con la base de datos.'
+            passwords_no_match: 'Las contraseñas no coinciden.',
+            db:     'Error de conexión con la base de datos.',
+            captcha: 'Captcha no válido.'
           };
           Swal.fire({ icon: 'error', title: '❌', text: msgs['<?= addslashes($error) ?>'] ?? 'Error desconocido' });
         </script>
