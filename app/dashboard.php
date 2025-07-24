@@ -12,9 +12,7 @@ $stmt = $pdo->prepare("SELECT * FROM devices WHERE user_id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-
 $userId = $_SESSION['user_id'];
-
 
 // Obtener nombre del archivo de imagen desde la DB
 $stmt = $pdo->prepare("SELECT profile_image FROM users WHERE id = ?");
@@ -27,9 +25,6 @@ $version  = file_exists($fullPath) ? filemtime($fullPath) : time();
 
 // Ruta final con anti-caché
 $user_img = $relativePath . '?v=' . $version;
-
-
-
 
 // 1) Lugares y dispositivos
 $places = [
@@ -44,8 +39,16 @@ $devices_by_place = [
 ];
 
 // 2) Dispositivo actual
-$currentPlaceId  = isset($_GET['place'])  ? (int)$_GET['place']  : $places[0]['id'];
-$currentDeviceId = isset($_GET['device']) ? (int)$_GET['device'] : $devices_by_place[$currentPlaceId][0]['id'];
+$currentPlaceId = isset($_GET['place']) ? (int)$_GET['place'] : ($places[0]['id'] ?? 0);
+$deviceList = $devices_by_place[$currentPlaceId] ?? [];
+$currentDeviceId = isset($_GET['device']) ? (int)$_GET['device'] : ($deviceList[0]['id'] ?? 0);
+
+// ✅ Verificación importante para evitar errores 500 si no hay dispositivos
+if (!$currentDeviceId) {
+    echo "<p style='padding:2rem; font-size:1.2rem; color:#d00;'>⚠️ No hay dispositivos asociados aún.<br>Ve a <a href='devices.php'>Mis Dispositivos</a> para agregar uno.</p>";
+    require __DIR__ . '/footer.php'; // si ya tenés HTML iniciado
+    exit;
+}
 
 // 3) Definición de líneas
 $unitMap = [
@@ -109,6 +112,7 @@ foreach($sensorsRaw as $s){
         ];
     }
 }
+
 
 // Ahora $sensors lleva el orden y los gadgets corregidos para tempHum y mq135
 
