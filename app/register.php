@@ -73,22 +73,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $message = '
         <html>
           <head>
-            <style>
-              body { font-family: Arial, sans-serif; background-color: #f9f9f9; color: #333; padding: 20px; font-size: 16px; }
-              .email-container {
-                max-width: 600px; margin: auto; background-color: #fff; padding: 30px;
-                border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); text-align: center;
-              }
-              .email-logo { max-width: 150px; margin-bottom: 20px; }
-              h1 { color: #003366; font-size: 24px; }
-              p { margin: 15px 0; line-height: 1.6; }
-              .login-button {
-                display: inline-block; margin-top: 25px; padding: 12px 25px;
-                background-color: #0073e6; color: #fff; text-decoration: none;
-                font-weight: bold; border-radius: 6px;
-              }
-              .footer { margin-top: 40px; font-size: 13px; color: #777; }
-            </style>
+<style>
+  /* Asegura scroll interno para panel izquierdo */
+  .form-container.sign-up-container,
+  .form-container.sign-in-container {
+    overflow-y: auto;
+    max-height: 100vh;
+    padding: 30px 20px;
+  }
+
+  /* Logo siempre visible y adaptado */
+  .overlay-panel .logo {
+    width: 260px;
+    max-width: 100%;
+    height: auto;
+    margin-bottom: 10px;
+  }
+
+  /* Modo responsive: mostrar panel completo y controles arriba */
+  @media (max-width: 768px) {
+    .overlay {
+      display: none;
+    }
+
+    .form-container {
+      width: 100% !important;
+      position: relative;
+      padding: 30px 20px;
+    }
+
+    .top-controls {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: flex;
+      gap: 10px;
+      z-index: 20;
+    }
+
+    .logo {
+      max-width: 160px;
+      height: auto;
+      display: block;
+      margin: 20px auto 10px;
+    }
+  }
+
+  /* Asegura visibilidad en pantallas más pequeñas */
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .container {
+    height: 100vh;
+    overflow: hidden;
+  }
+</style>
+
           </head>
           <body>
             <div class="email-container">

@@ -398,3 +398,9 @@ body.dark-mode .toggle-password {
 .lang-toggle:hover {
   background: rgba(255,255,255,0.1);
 }
+
+.form-container.sign-up-container {
+  overflow-y: auto !important;
+  max-height: 100vh !important;
+  min-height: 100vh !important;
+}
