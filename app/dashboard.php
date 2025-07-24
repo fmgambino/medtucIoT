@@ -458,11 +458,14 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
 
       </section>
 
-      <!-- Devices Page -->
-      <section id="devices" class="page">
-        <h1>Mis Dispositivos</h1>
-        <!-- ABM Devices aquí -->
-      </section>
+<!-- Devices Page -->
+<section id="devices" class="page">
+  <script>
+    window.location.href = "<?= BASE_PATH ?>/app/devices.php";
+  </script>
+  <p>Redirigiendo a dispositivos...</p>
+</section>
+
 
       <!-- Configuraciones Page -->
       <section id="config" class="page">
