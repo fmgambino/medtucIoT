@@ -82,7 +82,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="options">
           <label><input type="checkbox" name="remember" /> Recuérdame</label>
-          <a href="#" onclick="showRecovery()" class="forgot-password">¿Olvidaste tu contraseña?</a>
+          <a href="#" class="forgot-password" onclick="event.preventDefault(); showRecovery();">¿Olvidaste tu contraseña?</a>
+
         </div>
 
         <button type="submit" class="btn">Ingresar</button>
