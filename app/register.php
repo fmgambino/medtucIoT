@@ -66,7 +66,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hashed
         ]);
 
-        // Email HTML de bienvenida
         $subject = "Bienvenido a MedTuCIoT";
         $loginUrl = "https://medtuc.electronicagambino.com/login";
         $logoUrl  = "https://www.educaciontuc.gov.ar/wp-content/uploads/2024/10/mnisteriodeeducacion.webp";
@@ -123,7 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 function validateCaptcha($captcha) {
-    $secretKey = '6Les8I0rAAAAAAp5jL1MUQIZZgzRhiCjvNqk_M03'; // ← Sustituye con tu clave secreta de reCAPTCHA
+    $secretKey = '6Les8I0rAAAAAAp5jL1MUQIZZgzRhiCjvNqk_M03';
     $response = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$secretKey}&response={$captcha}");
     $result = json_decode($response, true);
     return $result['success'] ?? false;
@@ -142,10 +141,9 @@ function validateCaptcha($captcha) {
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <style>
-    /* Aplicar scroll en el panel izquierdo */
     .form-container.sign-up-container {
-      overflow-y: auto;  /* Habilita el scroll si es necesario */
-      max-height: 80vh;   /* Limita la altura del panel izquierdo */
+      overflow-y: auto !important;
+      max-height: 100vh !important;
       padding-bottom: 20px;
     }
   </style>
@@ -161,7 +159,6 @@ function validateCaptcha($captcha) {
           <input type="text" name="last_name" placeholder="Apellido" required>
         </div>
 
-        <!-- Campo para usuario (nickname) -->
         <input type="text" name="username" placeholder="Usuario (nombre de usuario)" required>
 
         <select name="country" id="country" required>
@@ -181,7 +178,6 @@ function validateCaptcha($captcha) {
 
         <input type="password" name="confirm_password" placeholder="Confirmar Contraseña" required>
 
-        <!-- ReCAPTCHA -->
         <div class="g-recaptcha" data-sitekey="6Les8I0rAAAAABX5jxa83mh6b78OVEWJuvn5qU3C"></div>
 
         <div class="options">
