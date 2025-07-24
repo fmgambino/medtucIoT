@@ -34,14 +34,21 @@ try {
     $update = $pdo->prepare("UPDATE users SET password_hash = ? WHERE id = ?");
     $update->execute([$hashedPassword, $user['id']]);
 
-    // Enviar el correo de recuperación
+    // Registrar evento de recuperación
+    $ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+    $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'unknown';
+
+    $log = $pdo->prepare("INSERT INTO password_resets (user_id, email, ip_address, user_agent) VALUES (?, ?, ?, ?)");
+    $log->execute([$user['id'], $email, $ip, $userAgent]);
+
+    // Enviar el correo
     sendRecoveryEmail($email, $user['first_name'], $user['last_name'], $user['username'], $tempPassword);
 
     echo json_encode(['success' => true, 'message' => '📬 Se envió un correo con tus datos de acceso. Revisa tu bandeja de entrada o spam.']);
-
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => '⚠️ Error interno del servidor.']);
 }
+
 
 // === FUNCIONES ===
 function sendRecoveryEmail($email, $first_name, $last_name, $username, $tempPassword) {
