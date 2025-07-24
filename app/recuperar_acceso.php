@@ -3,6 +3,10 @@
 require __DIR__ . '/config.php';
 header('Content-Type: application/json');
 
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+
+
 // Obtener y validar el email
 $data = json_decode(file_get_contents('php://input'), true);
 $email = trim($data['email'] ?? '');
