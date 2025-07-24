@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css?family=Montserrat:400,800');
 
-/* ========== Reset & Global ========== */
+/* ========== Reset & Globals ========== */
 * {
   box-sizing: border-box;
 }
@@ -360,6 +360,7 @@ body.dark-mode .toggle-password {
   .logo {
     max-width: 150px;
     margin: 20px auto 10px;
+    display: block;
   }
 
   .top-controls {
