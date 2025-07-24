@@ -141,6 +141,14 @@ function validateCaptcha($captcha) {
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <style>
+    /* Aplicar scroll en el panel izquierdo */
+    .form-container.sign-up-container {
+      overflow-y: auto;  /* Habilita el scroll si es necesario */
+      max-height: 80vh;   /* Limita la altura del panel izquierdo */
+      padding-bottom: 20px;
+    }
+  </style>
 </head>
 <body>
   <div class="container">
