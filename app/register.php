@@ -54,10 +54,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $hashed
         ]);
 
-        // Email de bienvenida
+        // Email de bienvenida (HTML)
         $subject = "Bienvenido a MedTuCIoT";
-        $message = "Hola {$first_name},\n\nGracias por registrarte en MedTuCIoT. Ya puedes iniciar sesión y comenzar a usar la plataforma.";
-        $headers = "From: no-reply@medtuc.electronicagambino.com";
+        $loginUrl = "https://medtuc.electronicagambino.com/login";
+        $logoUrl  = "https://www.educaciontuc.gov.ar/wp-content/uploads/2024/10/mnisteriodeeducacion.webp";
+
+        $message = '
+        <html>
+          <head>
+            <style>
+              body { font-family: Arial, sans-serif; background-color: #f9f9f9; color: #333; padding: 20px; font-size: 16px; }
+              .email-container {
+                max-width: 600px; margin: auto; background-color: #fff; padding: 30px;
+                border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.05); text-align: center;
+              }
+              .email-logo { max-width: 150px; margin-bottom: 20px; }
+              h1 { color: #003366; font-size: 24px; }
+              p { margin: 15px 0; line-height: 1.6; }
+              .login-button {
+                display: inline-block; margin-top: 25px; padding: 12px 25px;
+                background-color: #0073e6; color: #fff; text-decoration: none;
+                font-weight: bold; border-radius: 6px;
+              }
+              .footer { margin-top: 40px; font-size: 13px; color: #777; }
+            </style>
+          </head>
+          <body>
+            <div class="email-container">
+              <img class="email-logo" src="' . $logoUrl . '" alt="Ministerio de Educación de Tucumán">
+              <h1>¡Bienvenido a MedTuCIoT, ' . htmlspecialchars($first_name) . '!</h1>
+              <p>Gracias por registrarte en nuestra plataforma de monitoreo y control IoT educativo.</p>
+              <p>A partir de ahora podrás acceder a tu panel de usuario y comenzar a gestionar tus dispositivos conectados de forma eficiente.</p>
+              <p>Haz clic en el siguiente botón para iniciar sesión:</p>
+              <a class="login-button" href="' . $loginUrl . '">Iniciar Sesión</a>
+              <div class="footer">
+                Ministerio de Educación de Tucumán - Plataforma MedTuCIoT<br>
+                © ' . date('Y') . ' Electrónica Gambino
+              </div>
+            </div>
+          </body>
+        </html>
+        ';
+
+        $headers  = "MIME-Version: 1.0\r\n";
+        $headers .= "Content-type: text/html; charset=UTF-8\r\n";
+        $headers .= "From: MedTuCIoT <no-reply@medtuc.electronicagambino.com>\r\n";
+
         @mail($email, $subject, $message, $headers);
 
         header("Location: {$baseUrl}/register?success=1");
@@ -94,7 +136,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <select name="country" id="country" required>
           <option value="" data-i18n="country">País</option>
-          <!-- Puedes poblar con JS si es dinámico -->
+          <!-- Opcional: Poblar vía JS -->
         </select>
 
         <input type="text" name="province" placeholder="Provincia / Estado">
