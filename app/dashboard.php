@@ -189,6 +189,7 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
 
   <!-- Remixicon -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
+  <link rel="icon" href="assets/img/favicon.png" type="image/png" />
 
   <!-- Estilos -->
   <link rel="stylesheet" href="<?= rtrim(BASE_PATH, '/') ?>/assets/css/styles.css">
