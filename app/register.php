@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if ($password !== $confirm_password) {
-        header("Location: {$baseUrl}/register?error=match");
+        header("Location: {$baseUrl}/register?error=passwords_no_match");
         exit;
     }
 
@@ -153,7 +153,9 @@ function validateCaptcha($captcha) {
           <input type="text" name="last_name" placeholder="Apellido" required>
         </div>
 
+        <!-- Campo para usuario (nickname) -->
         <input type="text" name="username" placeholder="Usuario (nombre de usuario)" required>
+
         <select name="country" id="country" required>
           <option value="" data-i18n="country">País</option>
         </select>
@@ -171,7 +173,8 @@ function validateCaptcha($captcha) {
 
         <input type="password" name="confirm_password" placeholder="Confirmar Contraseña" required>
 
-        <div class="g-recaptcha" data-sitekey="TU_SITE_KEY"></div> <!-- Sustituye con tu site key -->
+        <!-- ReCAPTCHA -->
+        <div class="g-recaptcha" data-sitekey="TU_SITE_KEY"></div>
 
         <div class="options">
           <label for="remember">
@@ -193,9 +196,9 @@ function validateCaptcha($captcha) {
           const msgs = {
             campos: 'Por favor, completa todos los campos.',
             exists: 'El correo o usuario ya está registrado.',
-            db: 'Error de conexión con la base de datos.',
-            captcha: 'Captcha inválido. Intenta nuevamente.',
-            match: 'Las contraseñas no coinciden.'
+            passwords_no_match: 'Las contraseñas no coinciden.',
+            db:     'Error de conexión con la base de datos.',
+            captcha: 'Captcha inválido. Intenta nuevamente.'
           };
           Swal.fire({ icon: 'error', title: '❌', text: msgs['<?= addslashes($error) ?>'] ?? 'Error desconocido' });
         </script>
