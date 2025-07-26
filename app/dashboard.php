@@ -219,12 +219,12 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
 
   <!-- Remixicon -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
-  <link rel="icon" href="assets/img/favicon.png" type="image/png" />
+  <link rel="icon" href="<?= rtrim(BASE_PATH, '/') ?>/assets/img/favicon.png">
 
   <!-- Estilos -->
-  <link rel="stylesheet" href="<?= rtrim(BASE_PATH, '/') ?>/app/assets/css/styles.css">
-  <link rel="stylesheet" href="<?= rtrim(BASE_PATH, '/') ?>/app/assets/css/addSensor.css">
-  <link rel="stylesheet" href="<?= rtrim(BASE_PATH, '/') ?>/app/assets/css/mobiles.css">
+  <link rel="stylesheet" href="<?= rtrim(BASE_PATH, '/') ?>/assets/css/styles.css">
+  <link rel="stylesheet" href="<?= rtrim(BASE_PATH, '/') ?>/assets/css/addSensor.css">
+  <link rel="stylesheet" href="<?= rtrim(BASE_PATH, '/') ?>/assets/css/mobiles.css">
 
   <!-- Librerías JS -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -243,7 +243,7 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
   <!-- drawer móvil oculto -->
   <div class="mobile-drawer" id="mobileDrawer">
     <div class="mobile-drawer-header">
-      <img src="<?= BASE_PATH ?>assets/img/logo-small.png" alt="Logo" class="logo" />
+      <img src="<?= rtrim(BASE_PATH, '/') ?>/assets/img/logo-small.png">
     </div>
     <i id="themeToggleDrawer" class="ri-sun-line icon-btn" title="Modo claro/oscuro"></i>
     <i id="langToggleDrawer"  class="ri-earth-line icon-btn"  title="ES/EN"></i>
@@ -520,10 +520,10 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
 </script>
 
 <!-- Scripts propios -->
-<script defer src="<?= rtrim(BASE_PATH, '/') ?>/app/assets/js/main.js"></script>
-<script defer src="<?= rtrim(BASE_PATH, '/') ?>/app/assets/js/addSensor.js"></script>
-<script defer src="<?= rtrim(BASE_PATH, '/') ?>/app/assets/js/charts_sensores.js"></script>
-<script defer src="<?= rtrim(BASE_PATH, '/') ?>/app/assets/js/pwa.js"></script>
+<script defer src="<?= rtrim(BASE_PATH, '/') ?>/assets/js/main.js"></script>
+<script defer src="<?= rtrim(BASE_PATH, '/') ?>/assets/js/addSensor.js"></script>
+<script defer src="<?= rtrim(BASE_PATH, '/') ?>/assets/js/charts_sensores.js"></script>
+<script defer src="<?= rtrim(BASE_PATH, '/') ?>/assets/js/pwa.js"></script>
 
 <!-- Librerías externas -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -533,8 +533,8 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
 <!-- Service Worker adaptativo -->
 <script>
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register(BASE_PATH + '/app/service-wojer.js', {
-    scope: BASE_PATH + '/app/'
+  navigator.serviceWorker.register(BASE_PATH + '/service-wojer.js', {
+  scope: BASE_PATH + '/'
   })
   .then(reg => {
     console.log('SW registrado', reg);

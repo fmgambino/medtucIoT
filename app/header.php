@@ -17,7 +17,8 @@ if (!isset($_SESSION['user_id'])) {
 
   <!-- Remixicon -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
-  <link rel="icon" href="<?= BASE_PATH ?>/app/assets/img/favicon.png" type="image/png" />
+  <link rel="icon" href="<?= rtrim(BASE_PATH, '/') ?>/assets/img/favicon.png">
+
 
   <!-- Estilos -->
   <link rel="stylesheet" href="<?= BASE_PATH ?>/app/assets/css/styles.css">
@@ -40,7 +41,7 @@ if (!isset($_SESSION['user_id'])) {
 <!-- Drawer móvil -->
 <div class="mobile-drawer" id="mobileDrawer">
   <div class="mobile-drawer-header">
-    <img src="<?= BASE_PATH ?>/app/assets/img/logo-small.png" alt="Logo" class="logo" />
+    <img src="<?= rtrim(BASE_PATH, '/') ?>/assets/img/logo-small.png">
   </div>
   <i id="themeToggleDrawer" class="ri-sun-line icon-btn" title="Modo claro/oscuro"></i>
   <i id="langToggleDrawer"  class="ri-earth-line icon-btn"  title="ES/EN"></i>

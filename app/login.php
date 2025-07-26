@@ -60,7 +60,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <base href="<?= BASE_PATH ?>/" />
   <title>Iniciar sesión – MedTuCIoT</title>
   <link rel="stylesheet" href="assets/css/auth.css" />
-  <link rel="icon" href="assets/img/favicon.png" type="image/png" />
+  <link rel="icon" href="<?= rtrim(BASE_PATH, '/') ?>/assets/img/favicon.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://www.google.com/recaptcha/api.js" async defer></script>

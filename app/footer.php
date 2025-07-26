@@ -20,9 +20,10 @@
 <!-- Registro del Service Worker -->
 <script>
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register(BASE_PATH + '/app/service-wojer.js', {
-    scope: BASE_PATH + '/app/'
-  })
+  navigator.serviceWorker.register(BASE_PATH + '/service-wojer.js', {
+    scope: BASE_PATH + '/'
+})
+
   .then(reg => {
     console.log('SW registrado', reg);
     if (navigator.serviceWorker.controller) return;
