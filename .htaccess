@@ -7,8 +7,6 @@
 RewriteEngine On
 
 # 2) Si estás en local (XAMPP), activa esta línea:
-    RewriteEngine On
-RewriteBase /medtucIoT/
 
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
