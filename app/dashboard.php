@@ -56,8 +56,6 @@ $devices_by_place = [
     3 => [['id'=>301,'name'=>'ESP32-Campo1-1'],['id'=>302,'name'=>'ESP32-Campo1-2'],['id'=>303,'name'=>'ESP32-Campo1-3']],
 ];
 
-const currentDeviceId = <?= (int)$currentDeviceId ?>;
-
 // Obtener lugar y dispositivo actual
 $currentPlaceId = isset($_GET['place']) ? (int)$_GET['place'] : ($places[0]['id'] ?? 0);
 $deviceList = $devices_by_place[$currentPlaceId] ?? [];
@@ -516,106 +514,111 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
   </div>
 
 <!-- SCRIPTS -->
-
-<!-- Definir constantes globales en JS -->
 <script>
+  // Definir BASE_PATH global JS
   const BASE_PATH = '<?= rtrim(BASE_PATH, '/') ?>';
-  const currentDeviceId = <?= (int)($currentDeviceId ?? 0) ?>;
   window.BASE_PATH = BASE_PATH;
 </script>
+
+<script>
+  const currentDeviceId = <?= (int)($currentDeviceId ?? 0) ?>;
+</script>
+
+<!-- Scripts propios -->
+<script defer src="<?= rtrim(BASE_PATH, '/') ?>/assets/js/main.js"></script>
+<script defer src="<?= rtrim(BASE_PATH, '/') ?>/assets/js/addSensor.js"></script>
+<script defer src="<?= rtrim(BASE_PATH, '/') ?>/assets/js/charts_sensores.js"></script>
+<script defer src="<?= rtrim(BASE_PATH, '/') ?>/assets/js/pwa.js"></script>
 
 <!-- Librerías externas -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@^2.0.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-<!-- Scripts propios -->
-<script defer src="<?= BASE_PATH ?>/assets/js/main.js"></script>
-<script defer src="<?= BASE_PATH ?>/assets/js/addSensor.js"></script>
-<script defer src="<?= BASE_PATH ?>/assets/js/charts_sensores.js"></script>
-<script defer src="<?= BASE_PATH ?>/assets/js/pwa.js"></script>
-
 <!-- Service Worker adaptativo -->
 <script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register(BASE_PATH + '/service-wojer.js', {
-      scope: BASE_PATH + '/'
-    })
-    .then(reg => {
-      console.log('SW registrado', reg);
-      if (navigator.serviceWorker.controller) return;
-      reg.addEventListener('updatefound', () => {
-        const newSW = reg.installing;
-        newSW.addEventListener('statechange', () => {
-          if (newSW.state === 'activated') {
-            console.log('SW activado, recargando para tomar control');
-            window.location.reload();
-          }
-        });
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register(BASE_PATH + '/service-wojer.js', {
+  scope: BASE_PATH + '/'
+  })
+  .then(reg => {
+    console.log('SW registrado', reg);
+    if (navigator.serviceWorker.controller) return;
+    reg.addEventListener('updatefound', () => {
+      const newSW = reg.installing;
+      newSW.addEventListener('statechange', () => {
+        if (newSW.state === 'activated') {
+          console.log('SW activado, recargando para tomar control');
+          window.location.reload();
+        }
       });
-    })
-    .catch(err => console.error('Error SW:', err));
-  }
+    });
+  })
+  .catch(err => console.error('Error SW:', err));
+}
 </script>
 
 <!-- Cambio de lugar o dispositivo -->
 <script>
-  function onPlaceChange() {
-    const p = document.getElementById('placeSelect').value;
-    const d = document.getElementById('deviceSelect').value;
-    window.location.href = `${BASE_PATH}/dashboard?place=${encodeURIComponent(p)}&device=${encodeURIComponent(d)}`;
-  }
-
-  function onDeviceChange() {
-    onPlaceChange();
-  }
+function onPlaceChange() {
+  const p = document.getElementById('placeSelect').value;
+  const d = document.getElementById('deviceSelect').value;
+  window.location.href = `${BASE_PATH}/dashboard?place=${encodeURIComponent(p)}&device=${encodeURIComponent(d)}`;
+}
+function onDeviceChange() {
+  onPlaceChange();
+}
 </script>
 
-<!-- PopUp información del dispositivo -->
+<!-- Valor del dispositivo actual desde PHP a JS -->
 <script>
-  document.getElementById("showDeviceInfo").addEventListener("click", async () => {
-    if (!currentDeviceId) {
-      Swal.fire("Error", "No se ha seleccionado ningún dispositivo", "error");
+  const currentDeviceId = <?= (int)($currentDeviceId ?? 0) ?>;
+</script>
+
+<!-- Popup de información del dispositivo -->
+<script>
+document.getElementById("showDeviceInfo").addEventListener("click", async () => {
+  if (!currentDeviceId) {
+    Swal.fire("Error", "No se ha seleccionado ningún dispositivo", "error");
+    return;
+  }
+
+  try {
+    const res = await fetch(`get_devices.php?id=${currentDeviceId}`, {
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    });
+
+    const result = await res.json();
+
+    if (!result.success) {
+      Swal.fire("Error", result.message, "error");
       return;
     }
 
-    try {
-      const res = await fetch(`get_device.php?id=${currentDeviceId}`, {
-        headers: { "X-Requested-With": "XMLHttpRequest" }
-      });
+    const d = result.data;
+    const isDark = document.body.classList.contains("dark-mode");
 
-      const result = await res.json();
-
-      if (!result.success) {
-        Swal.fire("Error", result.message, "error");
-        return;
-      }
-
-      const d = result.data;
-      const isDark = document.body.classList.contains("dark-mode");
-
-      Swal.fire({
-        title: `Información – ${d.name}`,
-        icon: "info",
-        background: isDark ? "#1f1f1f" : "#fff",
-        color: isDark ? "#fff" : "#111",
-        confirmButtonColor: isDark ? "#00c853" : "#3085d6",
-        html: `
-          <div style="text-align: left; font-size: 0.95rem;">
-            <p><strong>📍 Ubicación:</strong> ${d.place_name || 'N/A'}</p>
-            <p><strong>🔢 Serial:</strong> ${d.serial_number}</p>
-            <p><strong>🔌 ESP32 ID:</strong> ${d.esp32_id}</p>
-            <p><strong>🔤 Nombre:</strong> ${d.name}</p>
-          </div>
-        `
-      });
-    } catch (err) {
-      console.error("Error al cargar información del dispositivo:", err);
-      Swal.fire("Error", "No se pudo obtener información del dispositivo", "error");
-    }
-  });
+    Swal.fire({
+      title: `Información – ${d.name}`,
+      icon: "info",
+      background: isDark ? "#1f1f1f" : "#fff",
+      color: isDark ? "#fff" : "#111",
+      confirmButtonColor: isDark ? "#00c853" : "#3085d6",
+      html: `
+        <div style="text-align: left; font-size: 0.95rem;">
+          <p><strong>📍 Ubicación:</strong> ${d.place_name || 'N/A'}</p>
+          <p><strong>🔢 Serial:</strong> ${d.serial_number}</p>
+          <p><strong>🔌 ESP32 ID:</strong> ${d.esp32_id}</p>
+          <p><strong>🔤 Nombre:</strong> ${d.name}</p>
+        </div>
+      `
+    });
+  } catch (err) {
+    console.error("Error al cargar información del dispositivo:", err);
+    Swal.fire("Error", "No se pudo obtener información del dispositivo", "error");
+  }
+});
 </script>
 
 </body>
 </html>
-

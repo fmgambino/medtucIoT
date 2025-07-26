@@ -11,12 +11,12 @@ if (empty($_SESSION['user_id'])) {
 }
 
 $userId = (int) $_SESSION['user_id'];
-$esp32Id = trim($_GET['esp32_id'] ?? '');
+$deviceId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
 // Validar parámetro requerido
-if ($esp32Id === '') {
+if ($deviceId <= 0) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => '⚠️ ID del dispositivo no especificado']);
+    echo json_encode(['success' => false, 'message' => '⚠️ ID de dispositivo no válido']);
     exit;
 }
 
@@ -34,11 +34,11 @@ try {
         SELECT d.*, p.nombre AS place_name
         FROM dispositivos d
         LEFT JOIN lugares p ON d.place_id = p.id
-        WHERE d.user_id = ? AND d.esp32_id = ?
+        WHERE d.user_id = ? AND d.id = ?
         LIMIT 1
     ";
     $stmt = $pdo->prepare($sql);
-    $stmt->execute([$userId, $esp32Id]);
+    $stmt->execute([$userId, $deviceId]);
     $device = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($device) {
