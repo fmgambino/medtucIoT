@@ -4,7 +4,7 @@ require __DIR__ . '/header.php';
 require __DIR__ . '/config.php';
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login');
+    header('Location: ' . BASE_PATH . '/app/login.php');
     exit;
 }
 
@@ -13,8 +13,7 @@ $stmt = $pdo->prepare("SELECT * FROM devices WHERE user_id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
-
-<link rel="stylesheet" href="assets/css/devices.css">
+<link rel="stylesheet" href="<?= BASE_PATH ?>/assets/css/devices.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <div class="container">
@@ -45,7 +44,7 @@ $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
   <div class="modal-content">
     <span class="close" onclick="closeModal()">×</span>
     <h2>Añadir Dispositivo</h2>
-    <form id="deviceForm" action="device_add.php" method="POST">
+    <form id="deviceForm" action="<?= BASE_PATH ?>/app/device_add.php" method="POST">
       <label>Ubicación:</label>
       <input type="text" name="ubicacion" required>
 
@@ -80,9 +79,8 @@ $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
   </div>
 </div>
 
-<script src="assets/js/devices.js"></script>
+<script src="<?= BASE_PATH ?>/assets/js/devices.js"></script>
 <script>
-  // Activar mapa al escribir domicilio (compatibilidad directa si no se cargó devices.js)
   if (!window.form) {
     document.getElementById('domicilio').addEventListener('input', function () {
       const value = this.value.trim();
