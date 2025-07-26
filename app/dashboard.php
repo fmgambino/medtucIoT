@@ -348,6 +348,7 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
              ) ?>
         </h1>
         <div class="panel-actions">
+          <i id="showDeviceInfo" class="ri-information-line icon-btn" title="Información del dispositivo"></i>
           <i id="showReboots" class="ri-history-line icon-btn" title="Historial de reinicios"></i>
           <i id="doReboot" class="ri-restart-line icon-btn" title="Reset remoto"></i>
           <span id="lastReset" class="last-reset">Último reset: —</span>
@@ -567,5 +568,39 @@ function onDeviceChange() {
   onPlaceChange();
 }
 </script>
+<!-- PopUp datos Devices-->
+<script>
+async function mostrarInfoDispositivo(espid) {
+  try {
+    const res = await fetch(`get_device.php?id=${espid}`);
+    const result = await res.json();
+
+    if (result.success) {
+      const d = result.data;
+      const isDark = document.body.classList.contains("dark-mode");
+
+      Swal.fire({
+        title: `Información de ${d.nombre}`,
+        icon: "info",
+        background: isDark ? "#1f1f1f" : "#fff",
+        color: isDark ? "#fff" : "#111",
+        html: `
+          <p><strong>Ubicación:</strong> ${d.ubicacion}</p>
+          <p><strong>ESP ID:</strong> ${d.espid}</p>
+          <p><strong>Serial:</strong> ${d.serial}</p>
+          <p><strong>Domicilio:</strong> ${d.domicilio}</p>
+          <iframe src="${d.mapa}" width="100%" height="200" style="border-radius:8px; border: none;" loading="lazy" allowfullscreen></iframe>
+        `
+      });
+    } else {
+      Swal.fire("Error", result.message, "error");
+    }
+  } catch (err) {
+    console.error(err);
+    Swal.fire("Error", "No se pudo obtener información del dispositivo", "error");
+  }
+};
+</script>
+
 </body>
 </html>
