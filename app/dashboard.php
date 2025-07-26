@@ -348,7 +348,7 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
              ) ?>
         </h1>
         <div class="panel-actions">
-          <i id="showDeviceInfo" class="ri-information-line icon-btn" title="Información del dispositivo"></i>
+          <i class="ri-information-line icon-btn" title="Info dispositivo" onclick="mostrarInfoDispositivo('ESP12345')"></i>
           <i id="showReboots" class="ri-history-line icon-btn" title="Historial de reinicios"></i>
           <i id="doReboot" class="ri-restart-line icon-btn" title="Reset remoto"></i>
           <span id="lastReset" class="last-reset">Último reset: —</span>
