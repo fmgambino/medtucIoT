@@ -1,41 +1,33 @@
 <?php
-// app/get_device.php
+require_once "config.php";
 
-require_once __DIR__ . '/../config.php';
 header('Content-Type: application/json');
 
-// Validar método
-if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => 'Método no permitido']);
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    echo json_encode(["success" => false, "message" => "ID inválido"]);
     exit;
 }
 
-// Validar parámetro ID
-if (!isset($_GET['id']) || empty($_GET['id'])) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Falta el parámetro ID']);
+$id = intval($_GET['id']);
+
+$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+if ($conn->connect_error) {
+    echo json_encode(["success" => false, "message" => "Error de conexión"]);
     exit;
 }
 
-$espid = trim($_GET['id']);
+$stmt = $conn->prepare("SELECT * FROM dispositivos WHERE id = ?");
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$result = $stmt->get_result();
 
-try {
-    $stmt = $pdo->prepare("SELECT * FROM devices WHERE espid = :espid LIMIT 1");
-    $stmt->execute(['espid' => $espid]);
-    $device = $stmt->fetch(PDO::FETCH_ASSOC);
-
-    if (!$device) {
-        http_response_code(404);
-        echo json_encode(['success' => false, 'message' => 'Dispositivo no encontrado']);
-        exit;
-    }
-
-    echo json_encode(['success' => true, 'data' => $device]);
-} catch (PDOException $e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Error de servidor: ' . $e->getMessage()
-    ]);
+if ($result->num_rows === 0) {
+    echo json_encode(["success" => false, "message" => "Dispositivo no encontrado"]);
+} else {
+    $device = $result->fetch_assoc();
+    echo json_encode(["success" => true, "data" => $device]);
 }
+
+$stmt->close();
+$conn->close();

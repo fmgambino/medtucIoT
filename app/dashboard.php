@@ -348,7 +348,8 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
              ) ?>
         </h1>
         <div class="panel-actions">
-          <i class="ri-information-line icon-btn" title="Info dispositivo" onclick="mostrarInfoDispositivo('ESP12345')"></i>
+          <!-- Ícono de información en dashboard.php -->
+          <i id="showDeviceInfo" class="ri-information-line icon-btn" title="Información del dispositivo"></i>
           <i id="showReboots" class="ri-history-line icon-btn" title="Historial de reinicios"></i>
           <i id="doReboot" class="ri-restart-line icon-btn" title="Reset remoto"></i>
           <span id="lastReset" class="last-reset">Último reset: —</span>
@@ -570,33 +571,47 @@ function onDeviceChange() {
 </script>
 <!-- PopUp datos Devices-->
 <script>
-async function mostrarInfoDispositivo(espid) {
+// Agrega este script al final de tu dashboard.js o <script> del HTML:
+document.getElementById("showDeviceInfo").addEventListener("click", mostrarInfoDispositivo);
+
+async function mostrarInfoDispositivo() {
+  const idDispositivo = 1; // Cambia este ID dinámicamente si es necesario
+
   try {
-    const res = await fetch(`get_device.php?id=${espid}`);
+    const res = await fetch(`get_devices.php?id=${idDispositivo}`);
     const result = await res.json();
 
-    if (result.success) {
-      const d = result.data;
-      const isDark = document.body.classList.contains("dark-mode");
+    if (!result.success) {
+      Swal.fire("Error", result.message, "error");
+      return;
+    }
 
-      Swal.fire({
-        title: `Información de ${d.nombre}`,
-        icon: "info",
-        background: isDark ? "#1f1f1f" : "#fff",
-        color: isDark ? "#fff" : "#111",
-        html: `
+    const d = result.data;
+    const isDark = document.body.classList.contains("dark-mode");
+
+    Swal.fire({
+      title: `Info – ${d.nombre}`,
+      icon: "info",
+      background: isDark ? "#1f1f1f" : "#fff",
+      color: isDark ? "#fff" : "#111",
+      confirmButtonColor: isDark ? "#00c853" : "#3085d6",
+      html: `
+        <div style="text-align: left; font-size: 0.95rem;">
           <p><strong>Ubicación:</strong> ${d.ubicacion}</p>
           <p><strong>ESP ID:</strong> ${d.espid}</p>
           <p><strong>Serial:</strong> ${d.serial}</p>
+          <p><strong>MAC:</strong> ${d.mac || "—"}</p>
+          <p><strong>WiFi:</strong> ${d.wifi || "—"}</p>
+          <p><strong>IP:</strong> ${d.ip || "—"}</p>
           <p><strong>Domicilio:</strong> ${d.domicilio}</p>
-          <iframe src="${d.mapa}" width="100%" height="200" style="border-radius:8px; border: none;" loading="lazy" allowfullscreen></iframe>
-        `
-      });
-    } else {
-      Swal.fire("Error", result.message, "error");
-    }
+          <div class="map-container" style="margin-top: 1rem;">
+            <iframe src="${d.mapa}" loading="lazy" allowfullscreen></iframe>
+          </div>
+        </div>
+      `
+    });
   } catch (err) {
-    console.error(err);
+    console.error("Error:", err);
     Swal.fire("Error", "No se pudo obtener información del dispositivo", "error");
   }
 };
