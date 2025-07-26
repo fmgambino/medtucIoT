@@ -1,33 +1,55 @@
 <?php
 require_once "config.php";
+session_start();
+header('Content-Type: application/json; charset=utf-8');
 
-header('Content-Type: application/json');
-
-if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
-    echo json_encode(["success" => false, "message" => "ID inválido"]);
+// Verificar sesión activa
+if (empty($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => '⚠️ Usuario no autenticado']);
     exit;
 }
 
-$id = intval($_GET['id']);
+$userId = (int) $_SESSION['user_id'];
+$esp32Id = trim($_GET['esp32_id'] ?? '');
 
-$conn = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME);
-
-if ($conn->connect_error) {
-    echo json_encode(["success" => false, "message" => "Error de conexión"]);
+// Validar parámetro requerido
+if ($esp32Id === '') {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => '⚠️ ID del dispositivo no especificado']);
     exit;
 }
 
-$stmt = $conn->prepare("SELECT * FROM dispositivos WHERE id = ?");
-$stmt->bind_param("i", $id);
-$stmt->execute();
-$result = $stmt->get_result();
+try {
+    // Conexión segura con PDO
+    $pdo = new PDO(
+        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+        DB_USER,
+        DB_PASS,
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
 
-if ($result->num_rows === 0) {
-    echo json_encode(["success" => false, "message" => "Dispositivo no encontrado"]);
-} else {
-    $device = $result->fetch_assoc();
-    echo json_encode(["success" => true, "data" => $device]);
+    // Consulta segura
+    $sql = "
+        SELECT d.*, p.nombre AS place_name
+        FROM dispositivos d
+        LEFT JOIN lugares p ON d.place_id = p.id
+        WHERE d.user_id = ? AND d.esp32_id = ?
+        LIMIT 1
+    ";
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute([$userId, $esp32Id]);
+    $device = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($device) {
+        echo json_encode(['success' => true, 'data' => $device]);
+    } else {
+        http_response_code(404);
+        echo json_encode(['success' => false, 'message' => '⚠️ Dispositivo no encontrado']);
+    }
+
+} catch (PDOException $e) {
+    http_response_code(500);
+    error_log("Error DB: " . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => '❌ Error al conectar con la base de datos']);
 }
-
-$stmt->close();
-$conn->close();
