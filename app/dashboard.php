@@ -264,12 +264,13 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
           <i class="ri-dashboard-line"></i>
           <span class="menu-text">Dashboard</span>
         </li>
-        <a href="<?= BASE_PATH ?>/devices.php">
-        <li data-page="devices">
+        <li>
+          <a href="<?= BASE_PATH ?>/devices">
           <i class="ri-cpu-line"></i>
           <span class="menu-text">Devices</span>
+          </a>
         </li>
-        </a>
+
         <li data-page="config">
           <i class="ri-settings-3-line"></i>
           <span class="menu-text">Configuraciones</span>

@@ -1,27 +1,20 @@
 <?php
-require_once __DIR__ . '/config.php';
-require_once __DIR__ . '/header.php';
+// /medtuciot/app/devices.php
+require __DIR__ . '/header.php';
+require __DIR__ . '/config.php';
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: ' . BASE_PATH . '/login');
+    header('Location: ' . BASE_PATH . '/app/login.php');
     exit;
 }
 
+// Obtener dispositivos del usuario actual
 $stmt = $pdo->prepare("SELECT * FROM devices WHERE user_id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
-<!DOCTYPE html>
-<html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <title>Mis Dispositivos</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="<?= BASE_PATH ?>/assets/css/devices.css">
-  <link rel="stylesheet" href="<?= BASE_PATH ?>/assets/css/styles.css">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-</head>
-<body>
+<link rel="stylesheet" href="<?= BASE_PATH ?>/assets/css/devices.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <div class="container">
   <h1>Mis Dispositivos</h1>
@@ -51,7 +44,7 @@ $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
   <div class="modal-content">
     <span class="close" onclick="closeModal()">×</span>
     <h2>Añadir Dispositivo</h2>
-    <form id="deviceForm" action="<?= BASE_PATH ?>/device_add.php" method="POST">
+    <form id="deviceForm" action="<?= BASE_PATH ?>/app/device_add.php" method="POST">
       <label>Ubicación:</label>
       <input type="text" name="ubicacion" required>
 
@@ -106,6 +99,4 @@ $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 </script>
 
-<?php require_once __DIR__ . '/footer.php'; ?>
-</body>
-</html>
+<?php require __DIR__ . '/footer.php'; ?>

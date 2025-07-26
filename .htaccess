@@ -7,10 +7,16 @@
 RewriteEngine On
 
 # 2) Si estás en local (XAMPP), activa esta línea:
-#    RewriteBase /medtucIoT/
+    RewriteEngine On
+RewriteBase /medtucIoT/
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^([a-zA-Z0-9_-]+)$ app/$1.php [L]
+
 
 # En producción (Hostinger - subdominio raíz), NO actives RewriteBase
-#    RewriteBase /
+ #   RewriteBase /
 
 # 💡 Usa SOLO una RewriteBase según el entorno
 
