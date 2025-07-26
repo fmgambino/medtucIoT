@@ -58,8 +58,7 @@ if (!isset($_SESSION['user_id'])) {
         <i class="ri-dashboard-line"></i>
         <span class="menu-text">Dashboard</span>
       </li>
-      <li data-page="devices">
-        <i class="ri-cpu-line"></i>
+      <li data-page="devices" onclick="window.location.href='<?= BASE_PATH ?>/devices'">        <i class="ri-cpu-line"></i>
         <span class="menu-text">Devices</span>
       </li>
       <li data-page="config">
