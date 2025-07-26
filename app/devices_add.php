@@ -1,5 +1,5 @@
 <?php
-// /medtuciot/app/device_add.php
+// /medtuciot/app/devices_add.php
 require __DIR__ . '/config.php';
 session_start();
 
@@ -39,7 +39,7 @@ if (
     exit;
 }
 
-// Validar formato del número de serie (ejemplo: EGABC123)
+// Validar formato del número de serie (ejemplo: EGXXXXXX)
 if (!preg_match('/^EG[A-Z0-9]{6}$/', $serial)) {
     $msg = '❗ Formato de número de serie inválido. Debe ser como EGXXXXXX.';
     isAjaxRequest()
