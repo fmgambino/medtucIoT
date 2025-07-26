@@ -1,32 +1,50 @@
 <?php
 // dashboard.php
+
+// Mostrar errores (para desarrollo, quitar en producción)
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 session_start();
 require_once __DIR__ . '/config.php';
 
+// Verificar si hay sesión iniciada
 if (!isset($_SESSION['user_id'])) {
     header('Location: ' . BASE_PATH . '/app/login.php');
     exit;
 }
 
-$stmt = $pdo->prepare("SELECT * FROM devices WHERE user_id = ?");
-$stmt->execute([$_SESSION['user_id']]);
-$devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Verifica que $pdo exista
+if (!isset($pdo)) {
+    die("❌ Error: conexión a base de datos no inicializada correctamente.");
+}
 
 $userId = $_SESSION['user_id'];
 
-// Obtener nombre del archivo de imagen desde la DB
-$stmt = $pdo->prepare("SELECT profile_image FROM users WHERE id = ?");
-$stmt->execute([$userId]);
-$relativePath = $stmt->fetchColumn() ?: 'assets/files/default.png';
+// Obtener dispositivos del usuario
+try {
+    $stmt = $pdo->prepare("SELECT * FROM devices WHERE user_id = ?");
+    $stmt->execute([$userId]);
+    $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("❌ Error al obtener dispositivos: " . $e->getMessage());
+}
 
-// Obtener path completo en disco para evitar caché
+// Obtener imagen de perfil
+try {
+    $stmt = $pdo->prepare("SELECT profile_image FROM users WHERE id = ?");
+    $stmt->execute([$userId]);
+    $relativePath = $stmt->fetchColumn() ?: 'assets/files/default.png';
+} catch (PDOException $e) {
+    $relativePath = 'assets/files/default.png';
+}
+
 $fullPath = __DIR__ . '/../' . $relativePath;
 $version  = file_exists($fullPath) ? filemtime($fullPath) : time();
-
-// Ruta final con anti-caché
 $user_img = $relativePath . '?v=' . $version;
 
-// 1) Lugares y dispositivos
+// Lugares y dispositivos simulados
 $places = [
     ['id'=>1,'name'=>'Casa'],
     ['id'=>2,'name'=>'Oficina'],
@@ -38,19 +56,19 @@ $devices_by_place = [
     3 => [['id'=>301,'name'=>'ESP32-Campo1-1'],['id'=>302,'name'=>'ESP32-Campo1-2'],['id'=>303,'name'=>'ESP32-Campo1-3']],
 ];
 
-// 2) Dispositivo actual
+// Obtener lugar y dispositivo actual
 $currentPlaceId = isset($_GET['place']) ? (int)$_GET['place'] : ($places[0]['id'] ?? 0);
 $deviceList = $devices_by_place[$currentPlaceId] ?? [];
 $currentDeviceId = isset($_GET['device']) ? (int)$_GET['device'] : ($deviceList[0]['id'] ?? 0);
 
-// ✅ Verificación importante para evitar errores 500 si no hay dispositivos
+// Mostrar advertencia si no hay dispositivo válido
 if (!$currentDeviceId) {
     echo "<p style='padding:2rem; font-size:1.2rem; color:#d00;'>⚠️ No hay dispositivos asociados aún.<br>Ve a <a href='devices.php'>Mis Dispositivos</a> para agregar uno.</p>";
-    require __DIR__ . '/footer.php'; // si ya tenés HTML iniciado
+    require __DIR__ . '/footer.php';
     exit;
 }
 
-// 3) Definición de líneas
+// Unidades para cada tipo de sensor
 $unitMap = [
     'tempHum'  => [
         ['label'=>'Temp',  'unit'=>'°C',    'spanId'=>'tempVal'],
@@ -71,44 +89,46 @@ $unitMap = [
     'ldr'     => [['label'=>'', 'unit'=>'lux', 'spanId'=>'ldrVal']],
 ];
 
-// 4) Obtener sensores
-$stmt = $pdo->prepare('SELECT * FROM sensors WHERE device_id = ? ORDER BY id');
-$stmt->execute([$currentDeviceId]);
-$sensorsRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Obtener sensores del dispositivo
+try {
+    $stmt = $pdo->prepare('SELECT * FROM sensors WHERE device_id = ? ORDER BY id');
+    $stmt->execute([$currentDeviceId]);
+    $sensorsRaw = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    die("❌ Error al obtener sensores: " . $e->getMessage());
+}
 
-// 5) Reordenar tempHum y mq135 primero
+// Priorizar sensores compuestos
 $order = ['tempHum','mq135'];
-usort($sensorsRaw, function($a,$b) use($order){
-    $aIdx = array_search($a['sensor_type'],$order,true) !== false ? array_search($a['sensor_type'],$order,true) : PHP_INT_MAX;
-    $bIdx = array_search($b['sensor_type'],$order,true) !== false ? array_search($b['sensor_type'],$order,true) : PHP_INT_MAX;
-    return $aIdx - $bIdx;
+usort($sensorsRaw, function($a, $b) use ($order) {
+    $aIdx = array_search($a['sensor_type'], $order, true);
+    $bIdx = array_search($b['sensor_type'], $order, true);
+    return ($aIdx === false ? PHP_INT_MAX : $aIdx) - ($bIdx === false ? PHP_INT_MAX : $bIdx);
 });
 
-// 6) Construir array final
+// Agrupar sensores
 $grouped = [];
-foreach($sensorsRaw as $s){
+foreach ($sensorsRaw as $s) {
     $type = $s['sensor_type'];
     $var  = strtolower($s['variable']);
 
-    if($type==='tempHum' && !isset($grouped['tempHum'])){
+    if ($type === 'tempHum' && !isset($grouped['tempHum'])) {
         $grouped['tempHum'] = [
-            'name'=>'DHT22','icon'=>'🌡️','id'=>$s['id'],
-            'sensor_type'=>'tempHum','variable'=>'tempHum',
-            'lines'=>$unitMap['tempHum']
+            'name' => 'DHT22', 'icon' => '🌡️', 'id' => $s['id'],
+            'sensor_type' => 'tempHum', 'variable' => 'tempHum',
+            'lines' => $unitMap['tempHum']
         ];
-    }
-    elseif($type==='mq135' && !isset($grouped['mq135'])){
+    } elseif ($type === 'mq135' && !isset($grouped['mq135'])) {
         $grouped['mq135'] = [
-            'name'=>'MQ135','icon'=>'⛽','id'=>$s['id'],
-            'sensor_type'=>'mq135','variable'=>'mq135',
-            'lines'=>$unitMap['mq135']
+            'name' => 'MQ135', 'icon' => '⛽', 'id' => $s['id'],
+            'sensor_type' => 'mq135', 'variable' => 'mq135',
+            'lines' => $unitMap['mq135']
         ];
-    }
-    elseif(!in_array($var,['co2','methane','butane','propane','temp','hum'],true)){
+    } elseif (!in_array($var, ['co2', 'methane', 'butane', 'propane', 'temp', 'hum'], true)) {
         $grouped[$var] = [
-            'name'=>$s['name'],'icon'=>$s['icon'],'id'=>$s['id'],
-            'sensor_type'=>$type,'variable'=>$var,
-            'lines'=>$unitMap[$var] ?? [['label'=>'','spanId'=>"$var".'Val','unit'=>'']]
+            'name' => $s['name'], 'icon' => $s['icon'], 'id' => $s['id'],
+            'sensor_type' => $type, 'variable' => $var,
+            'lines' => $unitMap[$var] ?? [['label'=>'','spanId'=>"$var".'Val','unit'=>'']]
         ];
     }
 }
