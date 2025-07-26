@@ -17,12 +17,12 @@ if (!isset($_SESSION['user_id'])) {
 
   <!-- Remixicon -->
   <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
-  <link rel="icon" href="<?= BASE_PATH ?>assets/img/favicon.png" type="image/png" />
+  <link rel="icon" href="<?= BASE_PATH ?>/app/assets/img/favicon.png" type="image/png" />
 
   <!-- Estilos -->
-  <link rel="stylesheet" href="<?= BASE_PATH ?>assets/css/styles.css">
-  <link rel="stylesheet" href="<?= BASE_PATH ?>assets/css/addSensor.css">
-  <link rel="stylesheet" href="<?= BASE_PATH ?>assets/css/mobiles.css">
+  <link rel="stylesheet" href="<?= BASE_PATH ?>/app/assets/css/styles.css">
+  <link rel="stylesheet" href="<?= BASE_PATH ?>/app/assets/css/addSensor.css">
+  <link rel="stylesheet" href="<?= BASE_PATH ?>/app/assets/css/mobiles.css">
 
   <!-- Librerías JS -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -40,12 +40,12 @@ if (!isset($_SESSION['user_id'])) {
 <!-- Drawer móvil -->
 <div class="mobile-drawer" id="mobileDrawer">
   <div class="mobile-drawer-header">
-    <img src="<?= BASE_PATH ?>assets/img/logo-small.png" alt="Logo" class="logo" />
+    <img src="<?= BASE_PATH ?>/app/assets/img/logo-small.png" alt="Logo" class="logo" />
   </div>
   <i id="themeToggleDrawer" class="ri-sun-line icon-btn" title="Modo claro/oscuro"></i>
   <i id="langToggleDrawer"  class="ri-earth-line icon-btn"  title="ES/EN"></i>
   <i id="notifToggleDrawer"class="ri-notification-3-line icon-btn" title="Notificaciones"></i>
-  <a href="<?= BASE_PATH ?>logout" class="icon-btn" title="Salir"><i class="ri-logout-box-line"></i></a>
+  <a href="<?= BASE_PATH ?>/logout" class="icon-btn" title="Salir"><i class="ri-logout-box-line"></i></a>
 </div>
 
 <div id="wrapper">
@@ -81,8 +81,7 @@ if (!isset($_SESSION['user_id'])) {
     <!-- Topbar -->
     <header class="topbar">
       <div class="topbar-left">
-        <img src="<?= BASE_PATH ?>assets/img/logo.png" id="logo" class="logo" alt="Logo">
-        <!-- Aquí los selects pueden ser insertados desde cada página si son dinámicos -->
+        <img src="<?= BASE_PATH ?>/app/assets/img/logo.png" id="logo" class="logo" alt="Logo">
       </div>
       <div class="topbar-right">
         <i id="themeToggle" class="ri-sun-line icon-btn" title="Modo claro/oscuro"></i>
@@ -97,7 +96,7 @@ if (!isset($_SESSION['user_id'])) {
           <input type="file" name="profile_image" id="profileInput" accept="image/*" onchange="document.getElementById('profileForm').submit();">
         </form>
 
-        <img src="<?= BASE_PATH . '/' . htmlspecialchars($_SESSION['profile_image'] ?? 'assets/files/default.png') ?>?v=<?= time() ?>"
+        <img src="<?= BASE_PATH . '/app/' . htmlspecialchars($_SESSION['profile_image'] ?? 'assets/files/default.png') ?>?v=<?= time() ?>"
              class="profile-img icon-btn"
              alt="Perfil"
              onclick="document.getElementById('profileInput').click();"

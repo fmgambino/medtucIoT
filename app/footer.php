@@ -11,11 +11,13 @@
   window.BASE_PATH = BASE_PATH;
 </script>
 
-<script defer src="<?= BASE_PATH ?>/assets/js/main.js"></script>
-<script defer src="<?= BASE_PATH ?>/assets/js/addSensor.js"></script>
-<script defer src="<?= BASE_PATH ?>/assets/js/charts_sensores.js"></script>
-<script defer src="<?= BASE_PATH ?>/assets/js/pwa.js"></script>
+<!-- JS locales -->
+<script defer src="<?= BASE_PATH ?>/app/assets/js/main.js"></script>
+<script defer src="<?= BASE_PATH ?>/app/assets/js/addSensor.js"></script>
+<script defer src="<?= BASE_PATH ?>/app/assets/js/charts_sensores.js"></script>
+<script defer src="<?= BASE_PATH ?>/app/assets/js/pwa.js"></script>
 
+<!-- Registro del Service Worker -->
 <script>
 if ('serviceWorker' in navigator) {
   navigator.serviceWorker.register(BASE_PATH + '/app/service-wojer.js', {

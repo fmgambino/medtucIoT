@@ -222,9 +222,9 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
   <link rel="icon" href="assets/img/favicon.png" type="image/png" />
 
   <!-- Estilos -->
-  <link rel="stylesheet" href="<?= rtrim(BASE_PATH, '/') ?>/assets/css/styles.css">
-  <link rel="stylesheet" href="<?= rtrim(BASE_PATH, '/') ?>/assets/css/addSensor.css">
-  <link rel="stylesheet" href="<?= rtrim(BASE_PATH, '/') ?>/assets/css/mobiles.css">
+  <link rel="stylesheet" href="<?= rtrim(BASE_PATH, '/') ?>/app/assets/css/styles.css">
+  <link rel="stylesheet" href="<?= rtrim(BASE_PATH, '/') ?>/app/assets/css/addSensor.css">
+  <link rel="stylesheet" href="<?= rtrim(BASE_PATH, '/') ?>/app/assets/css/mobiles.css">
 
   <!-- Librerías JS -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -528,10 +528,10 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
 </script>
 
 <!-- Scripts propios -->
-<script defer src="<?= rtrim(BASE_PATH, '/') ?>/assets/js/main.js"></script>
-<script defer src="<?= rtrim(BASE_PATH, '/') ?>/assets/js/addSensor.js"></script>
-<script defer src="<?= rtrim(BASE_PATH, '/') ?>/assets/js/charts_sensores.js"></script>
-<script defer src="<?= rtrim(BASE_PATH, '/') ?>/assets/js/pwa.js"></script>
+<script defer src="<?= rtrim(BASE_PATH, '/') ?>/app/assets/js/main.js"></script>
+<script defer src="<?= rtrim(BASE_PATH, '/') ?>/app/assets/js/addSensor.js"></script>
+<script defer src="<?= rtrim(BASE_PATH, '/') ?>/app/assets/js/charts_sensores.js"></script>
+<script defer src="<?= rtrim(BASE_PATH, '/') ?>/app/assets/js/pwa.js"></script>
 
 <!-- Librerías externas -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
