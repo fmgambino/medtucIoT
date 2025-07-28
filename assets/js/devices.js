@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await fetchDevices();
 });
 
-// Toggle modo claro/oscuro
+// Cambiar tema
 toggle.addEventListener("change", () => {
   const isDark = toggle.checked;
   document.body.classList.toggle("dark-mode", isDark);
@@ -28,7 +28,7 @@ function loadTheme() {
   toggle.checked = theme === "dark";
 }
 
-// Abrir modal (crear o editar)
+// Abrir modal
 function openModal(edit = false, data = null) {
   modal.classList.remove("hidden");
   form.reset();
@@ -56,7 +56,7 @@ function closeModal() {
   editId = null;
 }
 
-// Vista previa de mapa en tiempo real
+// Vista previa mapa
 form.domicilio.addEventListener("input", () => {
   const address = form.domicilio.value.trim();
   if (address.length > 5) {
@@ -66,7 +66,7 @@ form.domicilio.addEventListener("input", () => {
   }
 });
 
-// Envío del formulario (crear o editar)
+// Guardar (crear/editar)
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const formData = new FormData(form);
@@ -93,14 +93,22 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-// Obtener dispositivos desde el backend
+// Obtener dispositivos
 async function fetchDevices() {
   try {
     const res = await fetch("get_devices.php");
-    const { devices } = await res.json();
+    const result = await res.json();
 
-    grid.innerHTML = `<div class="add-card" onclick="openModal()">+ Añadir Dispositivo</div>`;
-    devices.forEach(device => addDeviceToGrid(device));
+    grid.innerHTML = `
+      <div class="add-card" onclick="openModal()">
+        <i data-feather="plus"></i> Añadir Dispositivo
+      </div>
+    `;
+
+    if (result.devices && Array.isArray(result.devices)) {
+      result.devices.forEach(device => addDeviceToGrid(device));
+    }
+
     feather.replace();
   } catch (err) {
     console.error("Error al cargar dispositivos:", err);
@@ -111,6 +119,7 @@ async function fetchDevices() {
 function addDeviceToGrid(device) {
   const card = document.createElement("div");
   card.className = "card";
+
   card.innerHTML = `
     <div class="card-header">${device.icono} ${device.name}</div>
     <div><strong>ID:</strong> ${device.esp32_id}</div>
@@ -124,10 +133,12 @@ function addDeviceToGrid(device) {
       <button onclick='deleteDevice(${device.id})'><i data-feather="trash-2"></i></button>
     </div>
   `;
-  grid.appendChild(card);
+
+  grid.insertBefore(card, grid.firstElementChild);
+  feather.replace();
 }
 
-// Mostrar detalles con SweetAlert
+// Mostrar popup de información
 function showInfo(device) {
   const isDark = document.body.classList.contains("dark-mode");
 
@@ -141,7 +152,7 @@ function showInfo(device) {
       <div style="text-align: left; font-size: 0.95rem;">
         <p><i data-feather="map-pin"></i> <strong>Ubicación:</strong> ${device.ubicacion}</p>
         <p><i data-feather="cpu"></i> <strong>ID ESP32:</strong> ${device.esp32_id}</p>
-        <p><i data-feather="hash"></i> <strong>MAC:</strong> ${device.serial_number.substring(2)}</p>
+        <p><i data-feather="hash"></i> <strong>MAC:</strong> ${device.serial_number?.substring(2)}</p>
         <p><i data-feather="wifi"></i> <strong>Red WiFi:</strong> MedTuCloT_WiFi</p>
         <p><i data-feather="globe"></i> <strong>IP:</strong> 192.168.0.101</p>
         <hr/>
@@ -176,6 +187,7 @@ async function deleteDevice(id) {
         },
         body: `id=${id}`
       });
+
       const result = await res.json();
       if (result.success) {
         Swal.fire("Eliminado", result.message, "success").then(fetchDevices);
