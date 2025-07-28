@@ -1,0 +1,35 @@
+[33mcommit df386273aabf6ea35a255c5be7b0e73fa215598c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmaster[m[33m, [m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: fmgambino <fernando.m.gambino@gmail.com>
+Date:   Mon Jul 28 16:02:14 2025 -0300
+
+    Se corrijen clases
+
+[33mcommit 5ef5b3e4ff4187752cb1451e7f9afeaf88877a30[m
+Author: fmgambino <fernando.m.gambino@gmail.com>
+Date:   Mon Jul 28 15:59:13 2025 -0300
+
+    se corrije css
+
+[33mcommit beb8f8f0324526bb929d462c8d90c83278bf689d[m
+Author: fmgambino <fernando.m.gambino@gmail.com>
+Date:   Mon Jul 28 15:55:15 2025 -0300
+
+    Se corrije css
+
+[33mcommit 0310b77f37b360848a9e1806f4d6ad9b1a092d8c[m
+Author: fmgambino <fernando.m.gambino@gmail.com>
+Date:   Mon Jul 28 15:42:32 2025 -0300
+
+    versión final de auth.css corregida con estas mejoras integradas
+
+[33mcommit 926494ac979aa0652908b3a19b0011901453a443[m
+Author: fmgambino <fernando.m.gambino@gmail.com>
+Date:   Mon Jul 28 15:32:26 2025 -0300
+
+    Corriijiendo estilos panel izq form login
+
+[33mcommit e65afab66d7646ee99bfdbe3c7d3caf0bb63293f[m
+Author: fmgambino <fernando.m.gambino@gmail.com>
+Date:   Mon Jul 28 15:26:36 2025 -0300
+
+    Se corrije estilos form login
