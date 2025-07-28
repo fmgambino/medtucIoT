@@ -56,7 +56,7 @@ $currentPage = basename($_SERVER['PHP_SELF'], ".php");
       <li class="menu-header">IOT PANEL</li>
 
       <li class="<?= $currentPage === 'dashboard' ? 'active' : '' ?>">
-        <a href="<?= BASE_PATH ?>/dashboard.php">
+        <a href="<?= BASE_PATH ?>/dashboard">
           <i class="ri-dashboard-line"></i>
           <span class="menu-text">Dashboard</span>
         </a>
