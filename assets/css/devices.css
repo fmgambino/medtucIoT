@@ -1,3 +1,13 @@
+:root {
+  --bg-dark: #111;
+  --bg-light: #f0f0f0;
+  --text-dark: #fff;
+  --text-light: #111;
+  --primary: #0f0;
+  --card-dark: #1a1a1a;
+  --card-light: #fff;
+}
+
 body {
   margin: 0 !important;
   font-family: "Segoe UI", sans-serif !important;
@@ -5,13 +15,13 @@ body {
 }
 
 body.dark-mode {
-  background: #111 !important;
-  color: #fff !important;
+  background: var(--bg-dark) !important;
+  color: var(--text-dark) !important;
 }
 
 body.light-mode {
-  background: #f0f0f0 !important;
-  color: #111 !important;
+  background: var(--bg-light) !important;
+  color: var(--text-light) !important;
 }
 
 .container {
@@ -22,46 +32,41 @@ body.light-mode {
 
 .grid {
   display: grid !important;
-  grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)) !important;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)) !important;
   gap: 1rem !important;
   padding: 1rem 0 !important;
 }
 
-/* Fuerza 4 columnas en escritorio */
 @media (min-width: 1024px) {
   .grid {
     grid-template-columns: repeat(4, 1fr) !important;
   }
 }
 
-/* CARD con fondo dinámico */
 .card {
   border-radius: 10px !important;
   padding: 1rem !important;
   position: relative !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
-  transition: background 0.3s ease, color 0.3s ease !important;
+  transition: background 0.3s, color 0.3s !important;
 }
 
-/* Modo claro */
-body.light-mode .card {
-  background-color: #ffffff !important;
-  color: #111 !important;
-  border: 1px solid #ddd !important;
-}
-
-/* Modo oscuro */
+/* Color card según modo */
 body.dark-mode .card {
-  background-color: #1f1f1f !important;
-  color: #fff !important;
-  border: 1px solid #333 !important;
+  background: var(--card-dark) !important;
+  color: white !important;
+}
+
+body.light-mode .card {
+  background: var(--card-light) !important;
+  color: black !important;
 }
 
 .card-header {
   display: flex !important;
   justify-content: space-between !important;
   font-size: 1.2rem !important;
-  color: #0f0 !important;
+  color: var(--primary) !important;
 }
 
 .card-footer {
@@ -74,14 +79,21 @@ body.dark-mode .card {
 .card-footer button {
   background: transparent !important;
   border: none !important;
-  color: inherit !important;
   font-size: 1.1rem !important;
   cursor: pointer !important;
 }
 
+body.dark-mode .card-footer button {
+  color: white !important;
+}
+
+body.light-mode .card-footer button {
+  color: black !important;
+}
+
 .add-card {
-  border: 2px dashed #0f0 !important;
-  color: #0f0 !important;
+  border: 2px dashed var(--primary) !important;
+  color: var(--primary) !important;
   cursor: pointer !important;
   display: flex !important;
   align-items: center !important;
@@ -122,18 +134,27 @@ body.dark-mode .card {
 }
 
 .modal-content {
-  background: #1f1f1f !important;
   padding: 2rem !important;
   border-radius: 10px !important;
   width: 90% !important;
   max-width: 400px !important;
   position: relative !important;
   box-sizing: border-box !important;
+  transition: background 0.3s, color 0.3s !important;
+}
+
+body.dark-mode .modal-content {
+  background: #1f1f1f !important;
   color: white !important;
 }
 
+body.light-mode .modal-content {
+  background: white !important;
+  color: black !important;
+}
+
 .modal-content h2 {
-  color: #0f0 !important;
+  color: var(--primary) !important;
 }
 
 .modal-content label {
@@ -150,6 +171,12 @@ body.dark-mode .card {
   border: 1px solid #444 !important;
   background: #2a2a2a !important;
   color: white !important;
+}
+
+body.light-mode .modal-content input,
+body.light-mode .modal-content select {
+  background: #f0f0f0 !important;
+  color: black !important;
 }
 
 .modal-content .btn-green {
@@ -178,8 +205,6 @@ body.dark-mode .card {
   border-radius: 5px !important;
   font-weight: bold !important;
   font-size: 0.8rem !important;
-  background: #ccc !important;
-  color: black !important;
   margin-left: 4px !important;
 }
 
@@ -204,15 +229,4 @@ body.dark-mode .card {
   background: #222 !important;
   color: #ccc !important;
   font-size: 0.9rem !important;
-}
-
-/* Adaptar popup SweetAlert a modo claro/oscuro */
-body.dark-mode .swal2-popup {
-  background: #1f1f1f !important;
-  color: #fff !important;
-}
-
-body.light-mode .swal2-popup {
-  background: #fff !important;
-  color: #111 !important;
 }

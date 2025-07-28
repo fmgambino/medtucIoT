@@ -35,7 +35,7 @@ $lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
 
     <div class="grid" id="deviceGrid">
       <div class="add-card" onclick="openModal()">+ Añadir Dispositivo</div>
-      <?php foreach ($devices as $index => $d): ?>
+      <?php foreach ($devices as $d): ?>
         <div class="card">
           <div class="card-header">
             <?= htmlspecialchars($d['icono']) ?> <?= htmlspecialchars($d['nombre']) ?>
