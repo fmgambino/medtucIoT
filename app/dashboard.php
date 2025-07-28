@@ -584,7 +584,7 @@ document.getElementById("showDeviceInfo").addEventListener("click", async () => 
   }
 
   try {
-    const res = await fetch(`get_devices.php?id=${currentDeviceId}`, {
+    const res = await fetch(`${BASE_PATH}/get_devices?id=${currentDeviceId}`, {
       headers: { "X-Requested-With": "XMLHttpRequest" }
     });
 
@@ -599,7 +599,7 @@ document.getElementById("showDeviceInfo").addEventListener("click", async () => 
     const isDark = document.body.classList.contains("dark-mode");
 
     Swal.fire({
-      title: `Información – ${d.name}`,
+      title: `Información – ${d.nombre || d.name}`,
       icon: "info",
       background: isDark ? "#1f1f1f" : "#fff",
       color: isDark ? "#fff" : "#111",
@@ -607,9 +607,9 @@ document.getElementById("showDeviceInfo").addEventListener("click", async () => 
       html: `
         <div style="text-align: left; font-size: 0.95rem;">
           <p><strong>📍 Ubicación:</strong> ${d.place_name || 'N/A'}</p>
-          <p><strong>🔢 Serial:</strong> ${d.serial_number}</p>
-          <p><strong>🔌 ESP32 ID:</strong> ${d.esp32_id}</p>
-          <p><strong>🔤 Nombre:</strong> ${d.name}</p>
+          <p><strong>🔢 Serial:</strong> ${d.serial_number || d.serial || '—'}</p>
+          <p><strong>🔌 ESP32 ID:</strong> ${d.esp32_id || d.espid || '—'}</p>
+          <p><strong>🔤 Nombre:</strong> ${d.nombre || d.name || '—'}</p>
         </div>
       `
     });
