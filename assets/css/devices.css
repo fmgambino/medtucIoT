@@ -27,13 +27,34 @@ body.light-mode {
   padding: 1rem 0 !important;
 }
 
+/* Fuerza 4 columnas en escritorio */
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+}
+
+/* CARD con fondo dinámico */
 .card {
-  background: #1a1a1a !important;
   border-radius: 10px !important;
   padding: 1rem !important;
   position: relative !important;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
-  color: white !important;
+  transition: background 0.3s ease, color 0.3s ease !important;
+}
+
+/* Modo claro */
+body.light-mode .card {
+  background-color: #ffffff !important;
+  color: #111 !important;
+  border: 1px solid #ddd !important;
+}
+
+/* Modo oscuro */
+body.dark-mode .card {
+  background-color: #1f1f1f !important;
+  color: #fff !important;
+  border: 1px solid #333 !important;
 }
 
 .card-header {
@@ -53,7 +74,7 @@ body.light-mode {
 .card-footer button {
   background: transparent !important;
   border: none !important;
-  color: white !important;
+  color: inherit !important;
   font-size: 1.1rem !important;
   cursor: pointer !important;
 }
@@ -183,4 +204,15 @@ body.light-mode {
   background: #222 !important;
   color: #ccc !important;
   font-size: 0.9rem !important;
+}
+
+/* Adaptar popup SweetAlert a modo claro/oscuro */
+body.dark-mode .swal2-popup {
+  background: #1f1f1f !important;
+  color: #fff !important;
+}
+
+body.light-mode .swal2-popup {
+  background: #fff !important;
+  color: #111 !important;
 }
