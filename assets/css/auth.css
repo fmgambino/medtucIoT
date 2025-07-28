@@ -331,3 +331,20 @@ body.dark-mode .toggle-password {
     display: none !important;
   }
 }
+
+.sign-in-container {
+  border: 2px solid red !important;
+  width: 50%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 30px;
+  position: relative;
+  background-color: #fff;
+  z-index: 10;
+}
+
+body.dark-mode .sign-in-container {
+  background-color: #2a2a2a;
+}
