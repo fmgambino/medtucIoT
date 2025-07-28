@@ -7,6 +7,8 @@ if (!isset($_SESSION['user_id'])) {
     header('Location: ' . BASE_PATH . '/app/login.php');
     exit;
 }
+
+$currentPage = basename($_SERVER['PHP_SELF'], ".php");
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -52,27 +54,40 @@ if (!isset($_SESSION['user_id'])) {
   <aside id="sidebar" class="sidebar collapsed">
     <ul class="menu">
       <li class="menu-header">IOT PANEL</li>
-      <li data-page="dashboard" class="active">
-        <i class="ri-dashboard-line"></i>
-        <span class="menu-text">Dashboard</span>
+
+      <li class="<?= $currentPage === 'dashboard' ? 'active' : '' ?>">
+        <a href="<?= BASE_PATH ?>/dashboard.php">
+          <i class="ri-dashboard-line"></i>
+          <span class="menu-text">Dashboard</span>
+        </a>
       </li>
-      <li>
-        <a href="<?= BASE_PATH ?>/devices">
+
+      <li class="<?= $currentPage === 'devices' ? 'active' : '' ?>">
+        <a href="<?= BASE_PATH ?>/devices.php">
           <i class="ri-cpu-line"></i>
           <span class="menu-text">Devices</span>
         </a>
       </li>
-      <li data-page="config">
-        <i class="ri-settings-3-line"></i>
-        <span class="menu-text">Configuraciones</span>
+
+      <li class="<?= $currentPage === 'config' ? 'active' : '' ?>">
+        <a href="<?= BASE_PATH ?>/config.php">
+          <i class="ri-settings-3-line"></i>
+          <span class="menu-text">Configuraciones</span>
+        </a>
       </li>
-      <li data-page="broker">
-        <i class="ri-cloud-line"></i>
-        <span class="menu-text">Broker MQTT</span>
+
+      <li class="<?= $currentPage === 'broker' ? 'active' : '' ?>">
+        <a href="<?= BASE_PATH ?>/broker.php">
+          <i class="ri-cloud-line"></i>
+          <span class="menu-text">Broker MQTT</span>
+        </a>
       </li>
-      <li data-page="profile">
-        <i class="ri-user-settings-line"></i>
-        <span class="menu-text">Mi Perfil</span>
+
+      <li class="<?= $currentPage === 'profile' ? 'active' : '' ?>">
+        <a href="<?= BASE_PATH ?>/profile.php">
+          <i class="ri-user-settings-line"></i>
+          <span class="menu-text">Mi Perfil</span>
+        </a>
       </li>
     </ul>
   </aside>
@@ -81,7 +96,8 @@ if (!isset($_SESSION['user_id'])) {
   <header class="topbar">
     <div class="topbar-left">
       <img src="<?= BASE_PATH ?>/assets/img/logo.png" id="logo" class="logo" alt="Logo">
-      <?php if (basename($_SERVER['PHP_SELF']) === 'dashboard.php'): ?>
+
+      <?php if ($currentPage === 'dashboard'): ?>
         <select id="placeSelect" onchange="onPlaceChange()">
           <?php foreach ($places as $p): ?>
             <option value="<?= $p['id'] ?>" <?= $p['id'] == $selected_place ? 'selected' : '' ?>>
@@ -113,11 +129,13 @@ if (!isset($_SESSION['user_id'])) {
       <form id="profileForm" action="<?= BASE_PATH ?>/app/imgPerfil.php" method="POST" enctype="multipart/form-data" style="display:none;">
         <input type="file" name="profile_image" id="profileInput" accept="image/*" onchange="document.getElementById('profileForm').submit();">
       </form>
+
       <img src="<?= BASE_PATH . '/' . htmlspecialchars($_SESSION['profile_image'] ?? 'assets/files/default.png') ?>?v=<?= time() ?>"
            class="profile-img icon-btn"
            alt="Perfil"
            onclick="document.getElementById('profileInput').click();"
            style="cursor:pointer; border-radius:50%; width:40px; height:40px; object-fit:cover;">
+
       <a href="<?= BASE_PATH ?>/logout" class="icon-btn"><i class="ri-logout-box-line"></i></a>
     </div>
   </header>
