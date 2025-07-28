@@ -5,13 +5,12 @@ require __DIR__ . '/config.php';
 session_start();
 header('Content-Type: application/json');
 
-// Verifica si es una petición AJAX
 function isAjaxRequest(): bool {
     return isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
            $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
 }
 
-// Verifica que haya sesión válida
+// 🔐 Validación de sesión
 if (!isset($_SESSION['user_id'])) {
     $msg = '🔒 Sesión no válida.';
     if (isAjaxRequest()) {
@@ -22,7 +21,8 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-$userId     = (int)$_SESSION['user_id'];
+// 🔄 Obtener y limpiar datos
+$userId     = (int) $_SESSION['user_id'];
 $ubicacion  = trim($_POST['ubicacion'] ?? '');
 $nombre     = trim($_POST['nombre'] ?? '');
 $espid      = trim($_POST['espid'] ?? '');
@@ -30,9 +30,9 @@ $serial     = strtoupper(trim($_POST['serial'] ?? ''));
 $icono      = trim($_POST['icono'] ?? '');
 $domicilio  = trim($_POST['domicilio'] ?? '');
 $mapa       = trim($_POST['mapa'] ?? '');
-$placeId    = 1; // Por defecto, o ajustable en el futuro
+$placeId    = 1; // Puede ajustarse en el futuro
 
-// Verifica que todos los campos estén presentes
+// ✅ Validar campos
 $camposFaltantes = array_filter([
     'ubicacion' => $ubicacion,
     'nombre'    => $nombre,
@@ -50,7 +50,7 @@ if (!empty($camposFaltantes)) {
         : exit("<script>alert('$msg'); window.location.href='devices.php';</script>");
 }
 
-// Validación del serial: EG + 6 alfanuméricos
+// ✅ Validar serial (EGXXXXXX)
 if (!preg_match('/^EG[A-Z0-9]{6}$/', $serial)) {
     $msg = '❗ El número de serie debe tener formato: EGXXXXXX (6 caracteres alfanuméricos).';
     isAjaxRequest()
@@ -58,9 +58,9 @@ if (!preg_match('/^EG[A-Z0-9]{6}$/', $serial)) {
         : exit("<script>alert('$msg'); window.location.href='devices.php';</script>");
 }
 
-// Verifica duplicados
-$stmt = $pdo->prepare("SELECT id FROM devices WHERE serial_number = ?");
-$stmt->execute([$serial]);
+// 🚫 Verificar duplicados
+$stmt = $pdo->prepare("SELECT id FROM devices WHERE serial_number = ? AND user_id = ?");
+$stmt->execute([$serial, $userId]);
 if ($stmt->fetch()) {
     $msg = '❌ Este número de serie ya está registrado.';
     isAjaxRequest()
@@ -68,7 +68,7 @@ if ($stmt->fetch()) {
         : exit("<script>alert('$msg'); window.location.href='devices.php';</script>");
 }
 
-// Inserta el nuevo dispositivo
+// 📝 Insertar dispositivo
 try {
     $insert = $pdo->prepare("
         INSERT INTO devices (
@@ -83,7 +83,6 @@ try {
             user_id
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
-
     $insert->execute([
         $serial,
         $placeId,
@@ -102,9 +101,8 @@ try {
         : exit("<script>alert('$msg'); window.location.href='devices.php';</script>");
 
 } catch (PDOException $e) {
+    error_log("❌ DB Error: " . $e->getMessage());
     $msg = '❌ Error al registrar el dispositivo. Inténtalo nuevamente.';
-    error_log('DB Error: ' . $e->getMessage());
-
     isAjaxRequest()
         ? exit(json_encode(['success' => false, 'message' => $msg]))
         : exit("<script>alert('$msg'); window.location.href='devices.php';</script>");
