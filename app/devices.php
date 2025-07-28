@@ -6,14 +6,24 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
-// Obtener dispositivos del usuario actual
-$stmt = $pdo->prepare("SELECT * FROM devices WHERE user_id = ?");
-$stmt->execute([$_SESSION['user_id']]);
+$userId = (int)$_SESSION['user_id'];
+
+$stmt = $pdo->prepare("
+  SELECT d.*, l.nombre AS lugar
+  FROM dispositivos d
+  LEFT JOIN lugares l ON d.place_id = l.id
+  WHERE d.user_id = ?
+  ORDER BY d.id ASC
+");
+$stmt->execute([$userId]);
 $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$currentDeviceId = $devices[0]['id'] ?? 0;
 ?>
 
 <link rel="stylesheet" href="<?= BASE_PATH ?>/assets/css/devices.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://unpkg.com/feather-icons"></script>
 
 <div class="container">
   <h1>Mis Dispositivos</h1>
@@ -24,12 +34,22 @@ $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <?php foreach ($devices as $d): ?>
       <div class="card">
-        <div class="card-header"><?= htmlspecialchars($d['icono']) ?> <?= htmlspecialchars($d['nombre']) ?></div>
+        <div class="card-header">
+          <?= htmlspecialchars($d['icono']) ?> <?= htmlspecialchars($d['nombre']) ?>
+        </div>
         <div><strong>ID:</strong> <?= htmlspecialchars($d['espid']) ?></div>
         <div><strong>Serie:</strong> <?= htmlspecialchars($d['serial']) ?></div>
         <div><strong>Ubicación:</strong> <?= htmlspecialchars($d['ubicacion']) ?></div>
         <div class="map-container">
           <iframe src="<?= htmlspecialchars($d['mapa']) ?>" loading="lazy" allowfullscreen></iframe>
+        </div>
+        <div class="card-footer">
+          <button onclick='showInfo(<?= json_encode($d, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'>
+            <i data-feather="info"></i>
+          </button>
+          <button onclick='restartDevice("<?= $d['espid'] ?>")'>
+            <i data-feather="refresh-ccw"></i>
+          </button>
         </div>
       </div>
     <?php endforeach; ?>
@@ -78,14 +98,24 @@ $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
   </div>
 </div>
 
-<script src="<?= BASE_PATH ?>/assets/js/devices.js"></script>
 <script>
-  if (!window.form) {
-    document.getElementById('domicilio').addEventListener('input', function () {
-      const value = this.value.trim();
-      const mapField = document.getElementById('mapa');
-      const mapPreview = document.getElementById('mapPreview');
+  const currentDeviceId = <?= (int)$currentDeviceId ?>;
 
+  function openModal() {
+    document.getElementById('deviceModal').classList.remove('hidden');
+  }
+  function closeModal() {
+    document.getElementById('deviceModal').classList.add('hidden');
+  }
+
+  document.addEventListener("DOMContentLoaded", () => {
+    feather.replace();
+    const input = document.getElementById('domicilio');
+    const mapField = document.getElementById('mapa');
+    const mapPreview = document.getElementById('mapPreview');
+
+    input?.addEventListener('input', () => {
+      const value = input.value.trim();
       if (value.length > 5) {
         const mapUrl = `https://www.google.com/maps?q=${encodeURIComponent(value)}&output=embed`;
         mapField.value = mapUrl;
@@ -95,14 +125,42 @@ $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
         mapPreview.innerHTML = '';
       }
     });
+  });
+
+  function showInfo(device) {
+    const isDark = document.body.classList.contains("dark-mode");
+
+    Swal.fire({
+      title: `Información – ${device.nombre}`,
+      icon: "info",
+      background: isDark ? "#1f1f1f" : "#fff",
+      color: isDark ? "#fff" : "#111",
+      confirmButtonColor: isDark ? "#00c853" : "#3085d6",
+      html: `
+        <div style="text-align: left; font-size: 0.95rem;">
+          <p><strong>📍 Ubicación:</strong> ${device.ubicacion}</p>
+          <p><strong>🔢 Serial:</strong> ${device.serial}</p>
+          <p><strong>🔌 ESP32 ID:</strong> ${device.espid}</p>
+          <p><strong>🔤 Nombre:</strong> ${device.nombre}</p>
+        </div>
+      `
+    });
   }
 
-  function openModal() {
-    document.getElementById('deviceModal').classList.remove('hidden');
-  }
-
-  function closeModal() {
-    document.getElementById('deviceModal').classList.add('hidden');
+  function restartDevice(espid) {
+    fetch(`<?= BASE_PATH ?>/mqtt_restart.php?espid=${encodeURIComponent(espid)}`)
+      .then(res => res.json())
+      .then(result => {
+        if (result.success) {
+          Swal.fire("✅ Dispositivo reiniciado", result.message, "success");
+        } else {
+          Swal.fire("❌ Error", result.message, "error");
+        }
+      })
+      .catch(err => {
+        console.error(err);
+        Swal.fire("❌ Error", "No se pudo comunicar con el servidor.", "error");
+      });
   }
 </script>
 
