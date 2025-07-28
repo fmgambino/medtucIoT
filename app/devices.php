@@ -27,24 +27,6 @@ $lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/feather-icons"></script>
 </head>
-<body class="light-mode">
-  <div class="navbar">
-    <div style="display: flex; align-items: center;">
-      <img src="logo.png" class="logo" alt="Logo" />
-      <select id="locationFilter">
-        <option>Todas</option>
-        <option>Casa</option>
-        <option>Oficina</option>
-      </select>
-    </div>
-    <div style="display: flex; align-items: center; gap: 0.5rem;">
-      <label class="switch">
-        <input type="checkbox" id="modeToggle" />
-        <span class="slider"></span>
-      </label>
-      <img src="profile.jpg" class="profile-pic" alt="Perfil" />
-    </div>
-  </div>
 
   <div class="container">
     <h1>Dispositivos</h1>
