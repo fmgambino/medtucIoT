@@ -1,25 +1,28 @@
 <?php
-require __DIR__ . '/config.php';
-session_start();
+require __DIR__ . '/header.php';
 
 if (!isset($_SESSION['user_id'])) {
-    header('Location: login.php');
+    header('Location: ' . BASE_PATH . '/login');
     exit;
 }
 
 $userId = (int)$_SESSION['user_id'];
-$stmt = $pdo->prepare("SELECT * FROM devices WHERE user_id = ? ORDER BY id DESC");
+
+$stmt = $pdo->prepare("SELECT * FROM devices WHERE user_id = ? ORDER BY created_at DESC");
 $stmt->execute([$userId]);
 $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+$lastDevice = end($devices);
+$lastDate = $lastDevice ? date("Y-m-d H:i", strtotime($lastDevice['created_at'] ?? 'now')) : 'N/A';
+$lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
 ?>
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dispositivos - MedTuCloT</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="<?= BASE_PATH ?>/assets/css/devices.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/feather-icons"></script>
@@ -139,7 +142,11 @@ $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
         cancelButtonText: 'Cancelar'
       }).then((result) => {
         if (result.isConfirmed) {
-          fetch(`devices_delete.php?id=${id}`)
+          fetch(`<?= BASE_PATH ?>/devices_delete.php`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `id=${id}`
+        })
             .then(res => res.json())
             .then(resp => {
               if (resp.success) {
