@@ -10,33 +10,34 @@ let editId = null;
 document.addEventListener("DOMContentLoaded", async () => {
   loadTheme();
   await fetchDevices();
+  feather.replace();
 });
 
-toggle.addEventListener("change", () => {
-  const isDark = toggle.checked;
-  document.body.classList.toggle("dark-mode", isDark);
-  document.body.classList.toggle("light-mode", !isDark);
-  localStorage.setItem("theme", isDark ? "dark" : "light");
-});
+if (toggle) {
+  toggle.addEventListener("change", () => {
+    const isDark = toggle.checked;
+    document.body.classList.toggle("dark-mode", isDark);
+    document.body.classList.toggle("light-mode", !isDark);
+    localStorage.setItem("theme", isDark ? "dark" : "light");
+  });
+}
 
 function loadTheme() {
   const theme = localStorage.getItem("theme") || "light";
   document.body.classList.add(`${theme}-mode`);
-  toggle.checked = theme === "dark";
+  if (toggle) toggle.checked = theme === "dark";
 }
 
-form.domicilio.addEventListener("input", () => {
-  const address = form.domicilio.value.trim();
+form.elements["domicilio"].addEventListener("input", () => {
+  const address = form.elements["domicilio"].value.trim();
   if (address.length > 5) {
     const url = `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
-    form.mapa.value = url;
+    form.elements["mapa"].value = url;
     mapPreview.innerHTML = `<iframe src="${url}" loading="lazy" allowfullscreen></iframe>`;
   }
 });
 
-document.getElementById("addDeviceBtn").addEventListener("click", () => {
-  openModal();
-});
+document.getElementById("addDeviceBtn")?.addEventListener("click", () => openModal());
 
 function openModal(edit = false, data = null) {
   modal.classList.remove("hidden");
@@ -47,12 +48,12 @@ function openModal(edit = false, data = null) {
 
   if (edit && data) {
     editId = data.id;
-    Object.keys(data).forEach(key => {
-      if (form[key]) form[key].value = data[key];
-    });
+    for (const key in data) {
+      if (form.elements[key]) form.elements[key].value = data[key];
+    }
     mapPreview.innerHTML = `<iframe src="${data.mapa}" loading="lazy" allowfullscreen></iframe>`;
   } else {
-    form.espid.value = "ESP" + Math.floor(Math.random() * 100000);
+    form.elements["espid"].value = "ESP" + Math.floor(Math.random() * 100000);
   }
 }
 
@@ -136,7 +137,10 @@ async function deleteDevice(id) {
     try {
       const res = await fetch("devices_delete.php", {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded", "X-Requested-With": "XMLHttpRequest" },
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "X-Requested-With": "XMLHttpRequest"
+        },
         body: `id=${id}`
       });
       const result = await res.json();
@@ -154,7 +158,6 @@ async function deleteDevice(id) {
 
 function showInfo(device) {
   const isDark = document.body.classList.contains("dark-mode");
-  const mqttColor = "green"; // puedes cambiar según estado real
 
   Swal.fire({
     title: `Estado de ${device.nombre}`,
@@ -171,7 +174,7 @@ function showInfo(device) {
         <p><i data-feather="globe"></i> <strong>IP:</strong> 192.168.0.101</p>
         <hr/>
         <p><i data-feather="bar-chart-2"></i> <strong>RSSI:</strong> <span class="badge green">-49 dBm</span></p>
-        <p><i data-feather="check-circle"></i> <strong>MQTT:</strong> <span class="badge ${mqttColor}">Online</span></p>
+        <p><i data-feather="check-circle"></i> <strong>MQTT:</strong> <span class="badge green">Online</span></p>
         <p><i data-feather="thermometer"></i> <strong>Temp CPU:</strong> <span class="badge green">53.3 °C</span></p>
         <p><i data-feather="clock"></i> <strong>Uptime:</strong> <span class="badge gray">0:00:03:17</span></p>
       </div>
