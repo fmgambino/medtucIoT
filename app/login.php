@@ -71,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <form action="login" method="POST" autocomplete="on">
         <h1>Iniciar sesión</h1>
         <input type="email" name="username" placeholder="Correo electrónico" autocomplete="username" required />
-        
+
         <div class="password-container">
           <input type="password" id="password" name="password" placeholder="Contraseña" autocomplete="current-password" required />
           <button type="button" id="togglePassword" class="toggle-password" aria-label="Mostrar contraseña">
@@ -83,28 +83,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="options">
           <label><input type="checkbox" name="remember" /> Recuérdame</label>
-          <a href="#" class="forgot-password" onclick="event.preventDefault(); showRecovery();">¿Olvidaste tu contraseña?</a>
-
+          <a href="#" onclick="event.preventDefault(); showRecovery();">¿Olvidaste tu contraseña?</a>
         </div>
 
         <button type="submit" class="btn">Ingresar</button>
       </form>
-
-      <?php if ($error): ?>
-        <script>
-          const messages = {
-            campos: 'Por favor, completa todos los campos y verifica el captcha.',
-            invalid: 'Correo o contraseña incorrectos.',
-            db: 'Error de conexión con la base de datos.',
-            captcha: 'Por favor, verifica que no eres un robot.'
-          };
-          Swal.fire({
-            icon: 'error',
-            title: '❌',
-            text: messages['<?= addslashes($error) ?>'] || 'Ha ocurrido un error.'
-          });
-        </script>
-      <?php endif; ?>
     </div>
 
     <div class="overlay-container">
@@ -124,73 +107,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </div>
     </div>
   </div>
-
-  <div class="auth-footer">
-    <span>Bienvenido a MedTuCIoT.</span><br />
-    <span>Powered by Electrónica Gambino</span>
-  </div>
-
-  <script src="assets/js/auth.js"></script>
-  <script>
-    document.getElementById('togglePassword').addEventListener('click', function () {
-      const pwd = document.getElementById('password');
-      const icon = document.getElementById('toggleIcon');
-      if (pwd.type === 'password') {
-        pwd.type = 'text';
-        icon.classList.replace('fa-eye', 'fa-eye-slash');
-        this.setAttribute('aria-label', 'Ocultar contraseña');
-      } else {
-        pwd.type = 'password';
-        icon.classList.replace('fa-eye-slash', 'fa-eye');
-        this.setAttribute('aria-label', 'Mostrar contraseña');
-      }
-    });
-
-    function toggleLanguage() {
-      alert('Funcionalidad de cambio de idioma en desarrollo');
-    }
-
-    function showRecovery() {
-      setTimeout(() => {
-        Swal.fire({
-          title: 'Recuperar acceso',
-          html: `
-            <p>Introduce tu correo electrónico para recibir instrucciones</p>
-            <input type="email" id="recoveryEmail" class="swal2-input" placeholder="Correo electrónico">
-          `,
-          confirmButtonText: 'ENVIAR',
-          showCancelButton: true,
-          cancelButtonText: 'CANCELAR',
-          focusConfirm: false,
-          preConfirm: () => {
-            const email = Swal.getPopup().querySelector('#recoveryEmail').value;
-            if (!email) {
-              Swal.showValidationMessage('Por favor, introduce tu correo');
-            }
-            return email;
-          }
-        }).then((result) => {
-          if (result.isConfirmed) {
-            fetch('recuperar_acceso.php', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: result.value })
-            })
-            .then(res => res.json())
-            .then(data => {
-              if (data.success) {
-                Swal.fire('✅ Listo', data.message, 'success');
-              } else {
-                Swal.fire('⚠️ Error', data.message, 'error');
-              }
-            })
-            .catch(() => {
-              Swal.fire('Error', 'No se pudo completar la solicitud', 'error');
-            });
-          }
-        });
-      }, 200); // pequeño retraso para asegurar ejecución
-    }
-  </script>
 </body>
 </html>
