@@ -1,5 +1,4 @@
 <?php
-// /medtuciot/app/login.php
 session_start();
 require __DIR__ . '/config.php';
 
@@ -20,7 +19,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 
-    // Validar reCAPTCHA
     $secretKey = '6LcVI44rAAAAAJ3hKeeGXGrnAGdJ2ETm_KahqkYY';
     $verify = file_get_contents("https://www.google.com/recaptcha/api/siteverify?secret={$secretKey}&response={$captchaResponse}");
     $captchaSuccess = json_decode($verify);
@@ -60,6 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <base href="<?= BASE_PATH ?>/">
   <title data-i18n="login">Iniciar sesión - MedTuCIoT</title>
   <link rel="stylesheet" href="assets/css/auth.css">
+  <link rel="stylesheet" href="assets/css/mobiles.css">
   <link rel="icon" href="<?= rtrim(BASE_PATH, '/') ?>/assets/img/favicon.png">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -69,6 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <div class="container">
     <div class="form-container sign-in-container">
       <form action="login" method="POST" autocomplete="on">
+        <img class="logo" src="assets/img/logo-dark.png" alt="Logo MedTuCIoT">
         <h1 data-i18n="login">Iniciar sesión</h1>
         <input type="email" name="username" placeholder="Correo electrónico" autocomplete="username" required>
         <div class="password-container">
@@ -83,7 +83,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <input type="checkbox" id="remember" name="remember">
             <span data-i18n="remember">Recuérdame</span>
           </label>
-          <a href="#" onclick="event.preventDefault(); showRecovery();">¿Olvidaste tu contraseña?</a>
+          <a href="#" onclick="event.preventDefault(); showRecovery();" data-i18n="forgotPassword">¿Olvidaste tu contraseña?</a>
         </div>
         <button type="submit" class="btn" data-i18n="login">Ingresar</button>
       </form>
@@ -105,10 +105,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
           <label class="switch" title="Cambiar tema">
             <input type="checkbox" id="themeSwitcher"><span class="slider"></span>
           </label>
-          <button class="lang-toggle" onclick="toggleLanguage()" title="Cambiar idioma">🇪🇸/🇺🇸</button>
+          <button class="lang-toggle" id="langToggle" title="Cambiar idioma">🇪🇸/🇺🇸</button>
         </div>
         <div class="overlay-panel overlay-right">
-          <img class="logo" src="assets/img/logo-dark.png" alt="Logo MedTuCIoT">
           <h1 data-i18n="createAccount">¿Nuevo aquí?</h1>
           <p data-i18n="subtitle">Crea una cuenta para empezar a monitorizar tus dispositivos</p>
           <a href="register"><button class="ghost" data-i18n="register">Registrarse</button></a>
