@@ -1,73 +1,67 @@
 <?php
-// /medtuciot/app/get_history.php
+require_once "config.php";
+session_start();
 header('Content-Type: application/json; charset=utf-8');
-require __DIR__ . '/config.php';
 
-// 🛠️ Agregar conexión PDO
+// Verifica sesión
+if (empty($_SESSION['user_id'])) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => '⚠️ Usuario no autenticado']);
+    exit;
+}
+
+$userId    = (int) $_SESSION['user_id'];
+$deviceId  = isset($_GET['device_id']) ? (int)$_GET['device_id'] : 0;
+$variable  = $_GET['variable'] ?? '';
+$start     = $_GET['start'] ?? null;
+$end       = $_GET['end'] ?? null;
+
+if (!$deviceId || !$variable) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => '❌ Parámetros insuficientes']);
+    exit;
+}
+
 try {
-    $pdo = new PDO("mysql:host=$dbHost;dbname=$dbName;charset=utf8mb4", $dbUser, $dbPass, [
-        PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION
+    $pdo = new PDO(
+        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+        DB_USER,
+        DB_PASS,
+        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+    );
+
+    // Validar que el dispositivo pertenece al usuario
+    $stmt = $pdo->prepare("SELECT id FROM devices WHERE id = :deviceId AND user_id = :userId");
+    $stmt->execute([':deviceId' => $deviceId, ':userId' => $userId]);
+    if (!$stmt->fetch()) {
+        http_response_code(403);
+        echo json_encode(['success' => false, 'message' => '❌ Acceso no autorizado al dispositivo']);
+        exit;
+    }
+
+    // Armar query
+    $query = "SELECT timestamp, value FROM readings WHERE device_id = :deviceId AND variable = :variable";
+    $params = [':deviceId' => $deviceId, ':variable' => $variable];
+
+    if ($start && $end) {
+        $query .= " AND timestamp BETWEEN :start AND :end";
+        $params[':start'] = $start;
+        $params[':end']   = $end;
+    }
+
+    $query .= " ORDER BY timestamp ASC";
+
+    $stmt = $pdo->prepare($query);
+    $stmt->execute($params);
+    $data = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    echo json_encode([
+        'success' => true,
+        'data' => $data
     ]);
+
 } catch (PDOException $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Error de conexión a la base de datos']);
-    exit;
+    error_log("Error DB (get_history): " . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => '❌ Error del servidor.']);
 }
-
-// Leer y validar parámetros
-$deviceId   = filter_input(INPUT_GET,  'deviceId',   FILTER_SANITIZE_STRING);
-$sensorType = filter_input(INPUT_GET,  'sensorType', FILTER_SANITIZE_STRING);
-$date       = filter_input(INPUT_GET,  'date',       FILTER_SANITIZE_STRING) ?: date('Y-m-d');
-
-if (!$deviceId || !$sensorType) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Parámetros inválidos']);
-    exit;
-}
-
-// Lista de sensores que guardan JSON compuesto en el campo 'value'
-$compositeSensors = ['tempHum', 'mq135'];
-
-// Query dinámica según tipo de sensor
-if (in_array($sensorType, $compositeSensors)) {
-    $sql = "
-      SELECT
-        sensor_type,
-        value,
-        '' AS unit,
-        timestamp
-      FROM sensor_data
-      WHERE device_id = :device_id
-        AND sensor_type = :sensor_type
-        AND DATE(timestamp) = :date
-      ORDER BY timestamp ASC
-    ";
-} else {
-    $sql = "
-      SELECT
-        sensor_type,
-        value,
-        unit,
-        timestamp
-      FROM sensor_data
-      WHERE device_id = :device_id
-        AND sensor_type = :sensor_type
-        AND DATE(timestamp) = :date
-      ORDER BY timestamp ASC
-    ";
-}
-
-$stmt = $pdo->prepare($sql);
-$stmt->execute([
-    'device_id'   => $deviceId,
-    'sensor_type' => $sensorType,
-    'date'        => $date
-]);
-
-$rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// 🧪 Log útil para debug si falla en frontend
-error_log("get_history.php → deviceId=$deviceId, sensorType=$sensorType, count=" . count($rows));
-
-// Enviar datos al frontend
-echo json_encode($rows, JSON_UNESCAPED_UNICODE);

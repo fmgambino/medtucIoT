@@ -4,7 +4,7 @@ session_start();
 
 header('Content-Type: application/json; charset=utf-8');
 
-// Mostrar errores solo en desarrollo
+// Mostrar errores en desarrollo (opcional)
 if ($_SERVER['HTTP_HOST'] === 'localhost') {
     ini_set('display_errors', 1);
     ini_set('display_startup_errors', 1);
@@ -29,16 +29,35 @@ try {
         [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
     );
 
-    // Obtener todos los dispositivos del usuario
-    $stmt = $pdo->prepare("SELECT * FROM devices WHERE user_id = :userId ORDER BY created_at DESC");
-    $stmt->bindParam(':userId', $userId, PDO::PARAM_INT);
-    $stmt->execute();
-    $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // ¿Se pasó un ID de dispositivo específico?
+    if (isset($_GET['id'])) {
+        $deviceId = (int) $_GET['id'];
 
-    echo json_encode([
-        'success' => true,
-        'devices' => $devices
-    ]);
+        $stmt = $pdo->prepare("SELECT * FROM devices WHERE id = :deviceId AND user_id = :userId LIMIT 1");
+        $stmt->bindParam(':deviceId', $deviceId, PDO::PARAM_INT);
+        $stmt->bindParam(':userId', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        $device = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($device) {
+            echo json_encode(['success' => true, 'device' => $device]);
+        } else {
+            http_response_code(404);
+            echo json_encode(['success' => false, 'message' => '📛 Dispositivo no encontrado']);
+        }
+
+    } else {
+        // Obtener todos los dispositivos del usuario
+        $stmt = $pdo->prepare("SELECT * FROM devices WHERE user_id = :userId ORDER BY created_at DESC");
+        $stmt->bindParam(':userId', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        echo json_encode([
+            'success' => true,
+            'devices' => $devices
+        ]);
+    }
 
 } catch (PDOException $e) {
     http_response_code(500);
