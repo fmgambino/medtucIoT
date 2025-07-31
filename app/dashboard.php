@@ -536,6 +536,9 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@^2.0.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="app/js/devicesCam.js"></script>
+<!-- Feather Icons (requerido por feather.replace()) -->
+<script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+
 
 <!-- Service Worker adaptativo -->
 <script>
@@ -731,7 +734,6 @@ function fetchCpuData() {
     });
 }
 </script>
-
 
 </body>
 </html>
