@@ -584,7 +584,7 @@ document.getElementById("showDeviceInfo").addEventListener("click", async () => 
   }
 
   try {
-    const res = await fetch(`${BASE_PATH}/get_device_status.php?deviceId=${currentDeviceId}`, {
+    const res = await fetch(`${BASE_PATH}/app/get_device_status.php?deviceId=${currentDeviceId}`, {
       headers: { "X-Requested-With": "XMLHttpRequest" }
     });
 
