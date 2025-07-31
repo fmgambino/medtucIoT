@@ -83,6 +83,9 @@ try {
 
 } catch (PDOException $e) {
     http_response_code(500);
-    error_log("❌ DB error in get_device_status.php: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => '❌ Error interno del servidor']);
+    echo json_encode([
+        'success' => false,
+        'message' => '❌ Error DB: ' . $e->getMessage()
+    ]);
 }
+
