@@ -1,45 +1,70 @@
 <?php
+// get_device_status.php
+
 require_once "config.php";
 session_start();
 
+// -------------------------
+// ↪ Encabezados de seguridad y respuesta
+// -------------------------
 header('Content-Type: application/json; charset=utf-8');
 
-// Mostrar errores en desarrollo
+// Mostrar errores solo en desarrollo local
 if ($_SERVER['HTTP_HOST'] === 'localhost') {
     ini_set('display_errors', 1);
     ini_set('display_startup_errors', 1);
     error_reporting(E_ALL);
 }
 
-// Verificar sesión activa
+// -------------------------
+// ↪ Verificar autenticación
+// -------------------------
 if (empty($_SESSION['user_id'])) {
-    http_response_code(401);
+    http_response_code(403);
     echo json_encode(['success' => false, 'message' => '⚠️ Usuario no autenticado']);
     exit;
 }
 
 $userId = (int) $_SESSION['user_id'];
 
-if (!isset($_GET['deviceId']) || !is_numeric($_GET['deviceId'])) {
+// -------------------------
+// ↪ Validar parámetro de entrada
+// -------------------------
+$deviceId = filter_input(INPUT_GET, 'deviceId', FILTER_VALIDATE_INT);
+
+if (!$deviceId) {
     http_response_code(400);
     echo json_encode(['success' => false, 'message' => 'ID de dispositivo inválido']);
     exit;
 }
 
-$deviceId = (int) $_GET['deviceId'];
-
+// -------------------------
+// ↪ Consulta segura a la base de datos
+// -------------------------
 try {
-    // Buscar el dispositivo del usuario
-    $stmt = $pdo->prepare("
-        SELECT d.id, d.name, d.esp32_id, d.mac, d.wifi, d.ip, d.rssi, d.mqtt_status, d.cpu_temp, d.uptime, d.place
+    $sql = "
+        SELECT 
+            d.name,
+            d.esp32_id,
+            d.mac,
+            d.wifi,
+            d.ip,
+            d.rssi,
+            d.mqtt_status,
+            d.cpu_temp,
+            d.uptime,
+            d.place
         FROM devices d
         WHERE d.id = :deviceId AND d.user_id = :userId
         LIMIT 1
-    ");
+    ";
+    
+    $stmt = $pdo->prepare($sql);
     $stmt->execute([
         ':deviceId' => $deviceId,
-        ':userId' => $userId
+        ':userId'   => $userId
     ]);
+    
     $device = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$device) {
@@ -48,27 +73,16 @@ try {
         exit;
     }
 
-    // Mapear nombres por claridad
-    $status = [
-        'name'      => $device['name'],
-        'esp32_id'  => $device['esp32_id'],
-        'mac'       => $device['mac'],
-        'wifi'      => $device['wifi'],
-        'ip'        => $device['ip'],
-        'rssi'      => $device['rssi'],
-        'mqtt'      => $device['mqtt_status'],
-        'cpu_temp'  => $device['cpu_temp'],
-        'uptime'    => $device['uptime'],
-        'place'     => $device['place'],
-    ];
-
+    // -------------------------
+    // ↪ Respuesta exitosa
+    // -------------------------
     echo json_encode([
         'success' => true,
-        'status'  => $status
+        'status'  => $device
     ]);
 
 } catch (PDOException $e) {
     http_response_code(500);
-    error_log("DB error in get_device_status.php: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => '❌ Error en servidor']);
+    error_log("❌ DB error in get_device_status.php: " . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => '❌ Error interno del servidor']);
 }
