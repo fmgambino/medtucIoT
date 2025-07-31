@@ -28,7 +28,8 @@ RewriteRule ^devices_delete/?$     app/devices_delete.php     [L,QSA]
 RewriteRule ^sensor/?$             app/sensor.php             [L,QSA]
 RewriteRule ^get_latest/?$         app/get_latest.php         [L,QSA]
 RewriteRule ^get_history/?$        app/get_history.php        [L,QSA]
-RewriteRule ^get_devices/?$        app/get_devices.php        [L,QSA]
+RewriteRule ^get_devices/?$        app/get_devices.php   
+RewriteRule ^get_device_status/?$  app/get_device_status.php  [L,QSA]     [L,QSA]
 RewriteRule ^logout/?$             app/logout.php             [L,QSA]
 RewriteRule ^recuperar_acceso/?$   app/recuperar_acceso.php   [L,QSA]
 

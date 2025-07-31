@@ -6,14 +6,14 @@ date_default_timezone_set('America/Argentina/Buenos_Aires');
 // 1) Detectar entorno y definir BASE_PATH automáticamente
 // ----------------------
 $hostName = $_SERVER['HTTP_HOST'] ?? '';
+$requestUri = $_SERVER['REQUEST_URI'] ?? '';
 $isLocal = strpos($hostName, 'localhost') !== false || strpos($hostName, '127.0.0.1') !== false;
 
+// BASE_PATH vacío en producción (subdominio apunta a carpeta /medtuc)
 if ($isLocal) {
-    // Entorno local (XAMPP)
-    defined('BASE_PATH') || define('BASE_PATH', '/medtucIoT');
+    define('BASE_PATH', '/medtucIoT'); // Ruta en entorno local (ej: localhost/medtucIoT)
 } else {
-    // Producción (Hostinger - subdominio apunta al root del proyecto)
-    defined('BASE_PATH') || define('BASE_PATH', '');
+    define('BASE_PATH', ''); // Ruta en producción → no debe incluir /medtuc
 }
 
 // ----------------------

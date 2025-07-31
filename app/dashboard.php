@@ -585,8 +585,13 @@ document.getElementById("showDeviceInfo").addEventListener("click", async () => 
 
   try {
     const res = await fetch(`${BASE_PATH}/app/get_device_status.php?deviceId=${currentDeviceId}`, {
-      headers: { "X-Requested-With": "XMLHttpRequest" }
-    });
+  method: 'GET',
+  headers: {
+    "X-Requested-With": "XMLHttpRequest"
+  },
+  credentials: 'same-origin' // ⬅️ Esto permite enviar cookies PHP
+});
+
 
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const result = await res.json();
