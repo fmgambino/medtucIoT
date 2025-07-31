@@ -1,48 +1,29 @@
 document.addEventListener('DOMContentLoaded', () => {
   const camIcon = document.getElementById('openCameraPopup');
 
-  if (camIcon) {
-    camIcon.addEventListener('click', () => {
-      const cameraURL = 'http://TU_CAMARA_IP/stream'; // Reemplaza con la URL real del stream
-
-      const popup = window.open('', 'cameraPopup', 'width=800,height=600');
-      if (!popup) {
-        alert('Por favor, permite las ventanas emergentes en tu navegador.');
-        return;
-      }
-
-      popup.document.write(`
-        <!DOCTYPE html>
-        <html lang="es">
-        <head>
-          <meta charset="UTF-8">
-          <title>Cámara IP</title>
-          <style>
-            body {
-              margin: 0;
-              background-color: #000;
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              height: 100vh;
-            }
-            video {
-              max-width: 100%;
-              max-height: 100%;
-            }
-          </style>
-        </head>
-        <body>
-          <video id="ipCam" controls autoplay></video>
-          <script>
-            const video = document.getElementById('ipCam');
-            video.src = '${cameraURL}';
-          <\/script>
-        </body>
-        </html>
-      `);
-    });
-  } else {
+  if (!camIcon) {
     console.warn('No se encontró el icono con id "openCameraPopup"');
+    return;
   }
+
+  camIcon.addEventListener('click', () => {
+    const cameraURL = camIcon.dataset.url || 'https://www.skylinewebcams.com/es/webcam/argentina/tierra-del-fuego/ushuaia/ushuaia.html';
+    const isDark = document.body.classList.contains('dark');
+
+    Swal.fire({
+      title: 'Cámara IP en Vivo',
+      html: `
+        <div style="position:relative;padding-top:56.25%;width:100%;">
+          <iframe src="${cameraURL}"
+                  style="position:absolute;top:0;left:0;width:100%;height:100%;border:none;"
+                  allow="autoplay; fullscreen"></iframe>
+        </div>
+      `,
+      width: '90%',
+      background: isDark ? '#2A2A2A' : '#fff',
+      color: isDark ? '#EEE' : '#333',
+      showCloseButton: true,
+      showConfirmButton: false
+    });
+  });
 });

@@ -350,7 +350,7 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
         <div class="panel-actions">
           <!-- Ícono de información en dashboard.php -->
           <i id="showDeviceInfo" class="ri-information-line icon-btn" title="Información del dispositivo"></i>
-          <i id="openCameraPopup" class="ri-camera-line icon-btn" title="Ver cámara IP"></i>
+          <i id="openCameraPopup" class="ri-camera-line icon-btn" title="Ver cámara del dispositivo" data-url="https://www.skylinewebcams.com/es/webcam/argentina/tierra-del-fuego/ushuaia/ushuaia.html"></i>
           <i id="showReboots" class="ri-history-line icon-btn" title="Historial de reinicios"></i>
           <i id="doReboot" class="ri-restart-line icon-btn" title="Reset remoto"></i>
           <span id="lastReset" class="last-reset">Último reset: —</span>
