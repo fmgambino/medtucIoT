@@ -535,6 +535,7 @@ $selected_device = (int)($_GET['device'] ?? ($devices[0]['id'] ?? 0));
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@^2.0.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="app/js/devicesCam.js"></script>
 
 <!-- Service Worker adaptativo -->
 <script>
