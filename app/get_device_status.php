@@ -1,16 +1,17 @@
 <?php
 require_once "config.php";
 session_start();
+
 header('Content-Type: application/json; charset=utf-8');
 
-// Mostrar errores solo en entorno local
+// Mostrar errores en desarrollo
 if ($_SERVER['HTTP_HOST'] === 'localhost') {
     ini_set('display_errors', 1);
     ini_set('display_startup_errors', 1);
     error_reporting(E_ALL);
 }
 
-// Verifica sesión activa
+// Verificar sesión activa
 if (empty($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'message' => '⚠️ Usuario no autenticado']);
@@ -18,54 +19,56 @@ if (empty($_SESSION['user_id'])) {
 }
 
 $userId = (int) $_SESSION['user_id'];
-$deviceId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 
-if ($deviceId <= 0) {
+if (!isset($_GET['deviceId']) || !is_numeric($_GET['deviceId'])) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => '❌ ID de dispositivo no válido']);
+    echo json_encode(['success' => false, 'message' => 'ID de dispositivo inválido']);
     exit;
 }
 
-try {
-    $pdo = new PDO(
-        "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
-        DB_USER,
-        DB_PASS,
-        [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
-    );
+$deviceId = (int) $_GET['deviceId'];
 
-    // Validar que el dispositivo pertenece al usuario
-    $stmt = $pdo->prepare("SELECT * FROM devices WHERE id = :deviceId AND user_id = :userId");
-    $stmt->execute([':deviceId' => $deviceId, ':userId' => $userId]);
+try {
+    // Buscar el dispositivo del usuario
+    $stmt = $pdo->prepare("
+        SELECT d.id, d.name, d.esp32_id, d.mac, d.wifi, d.ip, d.rssi, d.mqtt_status, d.cpu_temp, d.uptime, d.place
+        FROM devices d
+        WHERE d.id = :deviceId AND d.user_id = :userId
+        LIMIT 1
+    ");
+    $stmt->execute([
+        ':deviceId' => $deviceId,
+        ':userId' => $userId
+    ]);
     $device = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if (!$device) {
         http_response_code(404);
-        echo json_encode(['success' => false, 'message' => '❌ Dispositivo no encontrado']);
+        echo json_encode(['success' => false, 'message' => '📛 Dispositivo no encontrado']);
         exit;
     }
 
-    // Simular datos de estado (aquí deberías integrar datos reales si están en otra tabla)
+    // Mapear nombres por claridad
     $status = [
-        'esp32_id'   => $device['esp32_id'] ?? 'N/A',
-        'mac'        => $device['mac'] ?? 'A4:CF:12:34:56:78',
-        'rssi'       => -47,
-        'mqtt'       => 'Online',
-        'cpu_temp'   => 51.7,
-        'uptime'     => '0:00:04:17',
-        'wifi'       => 'MedTuCIoT_WiFi',
-        'ip'         => '192.168.0.104',
-        'place'      => $device['place_name'] ?? '—',
-        'last_seen'  => $device['last_seen'] ?? date('Y-m-d H:i:s'),
+        'name'      => $device['name'],
+        'esp32_id'  => $device['esp32_id'],
+        'mac'       => $device['mac'],
+        'wifi'      => $device['wifi'],
+        'ip'        => $device['ip'],
+        'rssi'      => $device['rssi'],
+        'mqtt'      => $device['mqtt_status'],
+        'cpu_temp'  => $device['cpu_temp'],
+        'uptime'    => $device['uptime'],
+        'place'     => $device['place'],
     ];
 
     echo json_encode([
         'success' => true,
-        'status' => $status
+        'status'  => $status
     ]);
 
 } catch (PDOException $e) {
     http_response_code(500);
-    error_log("Error DB (get_device_status): " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => '❌ Error del servidor.']);
+    error_log("DB error in get_device_status.php: " . $e->getMessage());
+    echo json_encode(['success' => false, 'message' => '❌ Error en servidor']);
 }
