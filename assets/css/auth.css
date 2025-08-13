@@ -123,6 +123,7 @@ body.dark-mode form {
 .sign-up-container {
   z-index: 2;
   left: 0;
+  width: 50%;
   height: 100%;
 }
 
@@ -161,7 +162,7 @@ body.dark-mode form {
   background-size: cover;
   background-repeat: no-repeat;
   position: relative;
-  width: 200%;
+  width: 100%;
   height: 100%;
   color: #fff;
   transform: translateX(0);
