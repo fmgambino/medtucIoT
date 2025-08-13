@@ -189,9 +189,9 @@ body.dark-mode .overlay {
 }
 
 .overlay-right {
-  right: 0;
+  left: 0%;
   transform: translateX(0);
-  width: 100%;
+  width: 50% !important;
 }
 
 .container.right-panel-active .overlay-right {
