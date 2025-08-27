@@ -115,26 +115,13 @@ form {
   padding: 40px 10px 80px;
 }
 
+/* Modo oscuro */
 body.dark-mode form {
   background-color: #2a2a2a;
 }
 
-.sign-in-container,
-.sign-up-container {
-  z-index: 2;
-  left: 0;
-  width: 50%;
-  height: 100%;
-}
-
-.container.right-panel-active .sign-in-container {
-  transform: translateX(100%);
-}
-
-.container.right-panel-active .sign-up-container {
-  transform: translateX(100%);
-  z-index: 5;
-  animation: show 0.6s;
+body.dark-mode .form-container {
+  background-color: #2a2a2a;
 }
 
 @keyframes show {
