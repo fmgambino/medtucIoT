@@ -8,36 +8,29 @@ if (!isset($_SESSION['user_id'])) {
 
 $userId = (int)$_SESSION['user_id'];
 
-// Obtener dispositivos
 $stmt = $pdo->prepare("SELECT * FROM devices WHERE user_id = ? ORDER BY created_at DESC");
 $stmt->execute([$userId]);
 $devices = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-// Último dispositivo agregado
 $lastDevice = end($devices);
 $lastDate = $lastDevice ? date("Y-m-d H:i", strtotime($lastDevice['created_at'] ?? 'now')) : 'N/A';
 $lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
 ?>
 
-<!-- Main content -->
-<div id="main-content" class="main-content expanded">
-  <header class="topbar">
-    <div class="topbar-left">
-      <img src="<?= BASE_PATH ?>assets/img/logo.png" id="logo" class="logo" alt="Logo">
-      <h1 style="margin-left:1rem;">Dispositivos</h1>
-    </div>
-    <div class="topbar-right">
-      <i id="themeToggle" class="ri-sun-line icon-btn" title="Modo claro/oscuro"></i>
-      <i id="langToggle" class="ri-earth-line icon-btn" title="ES/EN"></i>
-      <i id="notifToggle" class="ri-notification-3-line icon-btn" title="Notificaciones"></i>
-      <button class="hamburger" id="hamburger" aria-label="Menú móvil">
-        <span></span><span></span><span></span>
-      </button>
-      <a href="<?= BASE_PATH ?>/logout" class="icon-btn"><i class="ri-logout-box-line"></i></a>
-    </div>
-  </header>
-
-  <section id="devices" class="page active-page">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dispositivos - MedTuCloT</title>
+  <link rel="stylesheet" href="<?= BASE_PATH ?>/assets/css/styles.css">
+  <link rel="stylesheet" href="<?= BASE_PATH ?>/assets/css/devices.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body>
+  <div class="container">
+    <h1>Dispositivos</h1>
     <p><strong>Último agregado:</strong> <?= $lastDate ?> — ID: <?= htmlspecialchars($lastEspId) ?></p>
 
     <div class="grid" id="deviceGrid">
@@ -66,9 +59,8 @@ $lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
         </div>
       <?php endforeach; ?>
     </div>
-  </section>
+  </div>
 
-  <!-- Modal -->
   <div class="modal hidden" id="deviceModal">
     <div class="modal-content">
       <span class="close" onclick="closeModal()">×</span>
@@ -118,67 +110,71 @@ $lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
     </div>
   </div>
 
-  <?php require __DIR__ . '/footer.php'; ?>
-</div>
+  <div class="footer">© 2025 MedTuCloT – Electrónica Gambino</div>
 
-<!-- Scripts -->
-<script src="<?= BASE_PATH ?>/assets/js/main.js"></script>
-<script src="<?= BASE_PATH ?>/assets/js/devices.js"></script>
-<script>
-  feather.replace();
+  <script src="<?= BASE_PATH ?>/assets/js/main.js"></script>
+  <script src="<?= BASE_PATH ?>/assets/js/devices.js"></script>
+  <script>
+    feather.replace();
 
-  function deleteDevice(id) {
-    Swal.fire({
-      title: 'Eliminar dispositivo',
-      text: 'Esta acción no se puede deshacer. ¿Deseas continuar?',
-      icon: 'warning',
-      showCancelButton: true,
-      confirmButtonText: 'Sí, eliminar',
-      cancelButtonText: 'Cancelar',
-      background: document.body.classList.contains("dark-mode") ? "#1f1f1f" : "#fff",
-      color: document.body.classList.contains("dark-mode") ? "#fff" : "#111",
-      confirmButtonColor: document.body.classList.contains("dark-mode") ? "#00c853" : "#3085d6"
-    }).then((result) => {
-      if (result.isConfirmed) {
-        fetch(`<?= BASE_PATH ?>/devices_delete`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: `id=${id}`
-        })
-          .then(res => res.json())
-          .then(resp => {
-            if (resp.success) {
-              location.reload();
-            } else {
-              Swal.fire("Error", resp.message, "error");
-            }
-          });
-      }
-    });
-  }
+    function deleteDevice(id) {
+      Swal.fire({
+        title: 'Eliminar dispositivo',
+        text: 'Esta acción no se puede deshacer. ¿Deseas continuar?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar',
+        cancelButtonText: 'Cancelar'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`<?= BASE_PATH ?>/devices_delete`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `id=${id}`
+          })
+            .then(res => res.json())
+            .then(resp => {
+              if (resp.success) {
+                location.reload();
+              } else {
+                Swal.fire("Error", resp.message, "error");
+              }
+            });
+        }
+      });
+    }
 
-  function showInfo(device) {
-    Swal.fire({
-      title: `Información – ${device.nombre}`,
-      icon: "info",
-      background: document.body.classList.contains("dark-mode") ? "#1f1f1f" : "#fff",
-      color: document.body.classList.contains("dark-mode") ? "#fff" : "#111",
-      confirmButtonColor: document.body.classList.contains("dark-mode") ? "#00c853" : "#3085d6",
-      html: `
-        <div style="text-align: left; font-size: 0.95rem;">
-          <p><i data-feather="map-pin"></i> <strong>Ubicación:</strong> ${device.ubicacion}</p>
-          <p><i data-feather="cpu"></i> <strong>ID ESP32:</strong> ${device.esp32_id}</p>
-          <p><i data-feather="hash"></i> <strong>MAC:</strong> ${device.serial_number.substring(2)}</p>
-          <p><i data-feather="wifi"></i> <strong>Red WiFi:</strong> MedTuCIoT_WiFi</p>
-          <p><i data-feather="globe"></i> <strong>IP:</strong> 192.168.0.101</p>
-        </div>
-      `,
-      willOpen: () => feather.replace()
-    });
-  }
+    function showInfo(device) {
+      const isDark = document.body.classList.contains("dark-mode");
+      Swal.fire({
+        title: `Información – ${device.nombre}`,
+        icon: "info",
+        background: isDark ? "#1f1f1f" : "#fff",
+        color: isDark ? "#fff" : "#111",
+        confirmButtonColor: isDark ? "#00c853" : "#3085d6",
+        html: `
+          <div style="text-align: left; font-size: 0.95rem;">
+            <p><i data-feather="map-pin"></i> <strong>Ubicación:</strong> ${device.ubicacion}</p>
+            <p><i data-feather="cpu"></i> <strong>ID ESP32:</strong> ${device.esp32_id}</p>
+            <p><i data-feather="hash"></i> <strong>MAC:</strong> ${device.serial_number.substring(2)}</p>
+            <p><i data-feather="wifi"></i> <strong>Red WiFi:</strong> MedTuCloT_WiFi</p>
+            <p><i data-feather="globe"></i> <strong>IP:</strong> 192.168.0.101</p>
+            <hr/>
+            <p><i data-feather="bar-chart-2"></i> <strong>RSSI:</strong> <span class="badge green">-49 dBm</span></p>
+            <p><i data-feather="check-circle"></i> <strong>MQTT:</strong> <span class="badge green">Online</span></p>
+            <p><i data-feather="thermometer"></i> <strong>Temp CPU:</strong> <span class="badge green">53.3 °C</span></p>
+            <p><i data-feather="clock"></i> <strong>Uptime:</strong> <span class="badge gray">0:00:03:17</span></p>
+          </div>
+        `,
+        willOpen: () => feather.replace()
+      });
+    }
 
-  function editDevice(device) {
-    openModal(true, device);
-    document.getElementById("modalTitle").textContent = "Editar Dispositivo";
-  }
-</script>
+    function editDevice(device) {
+      openModal(true, device);
+      document.getElementById("modalTitle").textContent = "Editar Dispositivo";
+    }
+  </script>
+<?php require __DIR__ . '/footer.php'; ?>
+</body>
+</html>
