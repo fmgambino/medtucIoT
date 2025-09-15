@@ -87,6 +87,16 @@ $lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
           <option value="📡 Satélite">📡 Satélite</option>
           <option value="📶 Antena">📶 Antena</option>
           <option value="🔧 Genérico">🔧 Genérico</option>
+          <option value="💡 Lámpara">💡 Lámpara</option>
+          <option value="🖥 Oficina">🖥 Oficina</option>
+          <option value="🚪 Puerta">🚪 Puerta</option>
+          <option value="🌡 Termostato">🌡 Termostato</option>
+          <option value="📷 Cámara">📷 Cámara</option>
+          <option value="🚿 Baño">🚿 Baño</option>
+          <option value="🌳 Jardín">🌳 Jardín</option>
+          <option value="🍳 Cocina">🍳 Cocina</option>
+          <option value="🛏 Dormitorio">🛏 Dormitorio</option>
+          <option value="🛢 Depósito">🛢 Depósito</option>
         </select>
 
         <label>Domicilio:</label>

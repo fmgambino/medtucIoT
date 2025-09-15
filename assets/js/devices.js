@@ -1,52 +1,51 @@
-const modal = document.getElementById("deviceModal");
-const form = document.getElementById("deviceForm");
-const grid = document.getElementById("deviceGrid");
-const toggle = document.getElementById("modeToggle");
+// assets/js/devices.js
+
+const modal      = document.getElementById("deviceModal");
+const form       = document.getElementById("deviceForm");
+const grid       = document.getElementById("deviceGrid");
 const mapPreview = document.getElementById("mapPreview");
 
 let editMode = false;
-let editId = null;
+let editId   = null;
 
-// Al cargar la página
+// ----------------------
+// THEME HANDLING
+// ----------------------
+
+// Usa la misma API de main.js
+function applyTheme(dark) {
+  document.body.classList.toggle("dark", dark);
+}
+
+function loadTheme() {
+  const dark = localStorage.getItem("theme") === "dark";
+  applyTheme(dark);
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
   loadTheme();
   await fetchDevices();
 });
 
-// Cambiar tema
-toggle?.addEventListener("change", () => {
-  const isDark = toggle.checked;
-  document.body.classList.toggle("dark-mode", isDark);
-  document.body.classList.toggle("light-mode", !isDark);
-  localStorage.setItem("theme", isDark ? "dark" : "light");
-});
-
-// Cargar tema desde localStorage
-function loadTheme() {
-  const theme = localStorage.getItem("theme") || "light";
-  document.body.classList.add(`${theme}-mode`);
-  if (toggle) toggle.checked = theme === "dark";
-}
-
-// Abrir modal
+// ----------------------
+// MODAL HANDLING
+// ----------------------
 function openModal(edit = false, data = null) {
   modal.classList.remove("hidden");
   form.reset();
   mapPreview.innerHTML = "";
   editMode = edit;
-  editId = null;
+  editId   = null;
 
   if (edit && data) {
     editId = data.id;
-
-    // Precargar campos según las claves del objeto
-    form.nombre.value = data.nombre || "";
-    form.serial.value = data.serial_number || "";
-    form.espid.value = data.esp32_id || "";
-    form.ubicacion.value = data.ubicacion || "";
-    form.domicilio.value = data.domicilio || "";
-    form.mapa.value = data.mapa || "";
-    form.icono.value = data.icono || "";
+    form.nombre.value    = data.nombre        || "";
+    form.serial.value    = data.serial_number || "";
+    form.espid.value     = data.esp32_id      || "";
+    form.ubicacion.value = data.ubicacion     || "";
+    form.domicilio.value = data.domicilio     || "";
+    form.mapa.value      = data.mapa          || "";
+    form.icono.value     = data.icono         || "";
 
     if (data.mapa) {
       mapPreview.innerHTML = `<iframe src="${data.mapa}" loading="lazy" allowfullscreen></iframe>`;
@@ -56,16 +55,17 @@ function openModal(edit = false, data = null) {
   }
 }
 
-// Cerrar modal
 function closeModal() {
   modal.classList.add("hidden");
   form.reset();
   mapPreview.innerHTML = "";
   editMode = false;
-  editId = null;
+  editId   = null;
 }
 
-// Vista previa mapa
+// ----------------------
+// MAP PREVIEW
+// ----------------------
 form.domicilio.addEventListener("input", () => {
   const address = form.domicilio.value.trim();
   if (address.length > 5) {
@@ -78,13 +78,14 @@ form.domicilio.addEventListener("input", () => {
   }
 });
 
-// Guardar (crear/editar)
+// ----------------------
+// SAVE DEVICE (ADD/EDIT)
+// ----------------------
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
   const formData = new FormData(form);
   if (editMode) formData.append("id", editId);
 
-  // Confirmación con SweetAlert2
   const confirm = await Swal.fire({
     title: editMode ? "¿Guardar cambios?" : "¿Agregar este dispositivo?",
     text: editMode
@@ -107,9 +108,7 @@ form.addEventListener("submit", async (e) => {
 
     const result = await res.json();
     if (result.success) {
-      Swal.fire("✅ Éxito", result.message, "success").then(() => {
-        location.reload(); // 🔄 Recargar siempre tras guardar
-      });
+      Swal.fire("✅ Éxito", result.message, "success").then(() => location.reload());
     } else {
       Swal.fire("❌ Error", result.message, "error");
     }
@@ -119,7 +118,9 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-// Obtener dispositivos
+// ----------------------
+// FETCH DEVICES
+// ----------------------
 async function fetchDevices() {
   try {
     const res = await fetch("get_devices.php");
@@ -141,7 +142,9 @@ async function fetchDevices() {
   }
 }
 
-// Agregar tarjeta al grid
+// ----------------------
+// DEVICE CARD
+// ----------------------
 function addDeviceToGrid(device) {
   const card = document.createElement("div");
   card.className = "card";
@@ -164,16 +167,18 @@ function addDeviceToGrid(device) {
   feather.replace();
 }
 
-// Mostrar popup de información
+// ----------------------
+// INFO POPUP
+// ----------------------
 function showInfo(device) {
-  const isDark = document.body.classList.contains("dark-mode");
+  const dark = document.body.classList.contains("dark");
 
   Swal.fire({
     title: `Estado de ${device.nombre}`,
     icon: "info",
-    background: isDark ? "#1f1f1f" : "#fff",
-    color: isDark ? "#fff" : "#111",
-    confirmButtonColor: isDark ? "#00c853" : "#3085d6",
+    background: dark ? "#1f1f1f" : "#fff",
+    color: dark ? "#fff" : "#111",
+    confirmButtonColor: dark ? "#00c853" : "#3085d6",
     html: `
       <div style="text-align: left; font-size: 0.95rem;">
         <p><i data-feather="map-pin"></i> <strong>Ubicación:</strong> ${device.ubicacion}</p>
@@ -192,7 +197,9 @@ function showInfo(device) {
   });
 }
 
-// Eliminar dispositivo
+// ----------------------
+// DELETE DEVICE
+// ----------------------
 async function deleteDevice(id) {
   const confirm = await Swal.fire({
     title: "¿Eliminar dispositivo?",
@@ -216,11 +223,8 @@ async function deleteDevice(id) {
     });
 
     const result = await res.json();
-
     if (result.success) {
-      Swal.fire("Eliminado", result.message, "success").then(() => {
-        location.reload(); // 🔄 Recarga tras eliminación
-      });
+      Swal.fire("Eliminado", result.message, "success").then(() => location.reload());
     } else {
       Swal.fire("Error", result.message, "error");
     }
