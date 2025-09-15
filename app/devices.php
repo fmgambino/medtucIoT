@@ -47,7 +47,7 @@ $lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
           </div>
           <div class="card-footer">
             <button onclick='showInfo(<?= json_encode($d, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'><i data-feather="info"></i></button>
-            <button onclick='editDevice(<?= $d['id'] ?>)'><i data-feather="edit"></i></button>
+            <button onclick='editDevice(<?= json_encode($d, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'><i data-feather="edit"></i></button>
             <button onclick='deleteDevice(<?= $d['id'] ?>)'><i data-feather="trash-2"></i></button>
           </div>
         </div>
@@ -170,9 +170,10 @@ $lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
       });
     }
 
-    function editDevice(id) {
-      window.location.href = `<?= BASE_PATH ?>/devices_edit?id=${id}`;
-    }
+    function editDevice(device) {
+  openModal(true, device);
+}
+
   </script>
 <?php require __DIR__ . '/footer.php'; ?>
 </body>
