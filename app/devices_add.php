@@ -5,23 +5,19 @@ require __DIR__ . '/config.php';
 session_start();
 header('Content-Type: application/json');
 
-function isAjaxRequest(): bool {
-    return isset($_SERVER['HTTP_X_REQUESTED_WITH']) &&
-           $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest';
-}
-
-// 🔐 Validación de sesión
-if (!isset($_SESSION['user_id'])) {
-    $msg = '🔒 Sesión no válida.';
-    if (isAjaxRequest()) {
-        echo json_encode(['success' => false, 'message' => $msg]);
-    } else {
-        header('Location: login.php');
-    }
+/**
+ * Enviar respuesta JSON y finalizar script
+ */
+function jsonResponse(bool $success, string $message, array $extra = []): void {
+    echo json_encode(array_merge(['success' => $success, 'message' => $message], $extra));
     exit;
 }
 
-// 🔄 Obtener y limpiar datos
+// 🔐 Validación de sesión
+if (empty($_SESSION['user_id'])) {
+    jsonResponse(false, '🔒 Sesión no válida. Vuelve a iniciar sesión.');
+}
+
 $userId     = (int) $_SESSION['user_id'];
 $ubicacion  = trim($_POST['ubicacion'] ?? '');
 $nombre     = trim($_POST['nombre'] ?? '');
@@ -30,9 +26,9 @@ $serial     = strtoupper(trim($_POST['serial'] ?? ''));
 $icono      = trim($_POST['icono'] ?? '');
 $domicilio  = trim($_POST['domicilio'] ?? '');
 $mapa       = trim($_POST['mapa'] ?? '');
-$placeId    = 1; // Puede ajustarse en el futuro
+$placeId    = 1; // Por ahora fijo, escalable en el futuro
 
-// ✅ Validar campos
+// ✅ Validar campos obligatorios
 $camposFaltantes = array_filter([
     'ubicacion' => $ubicacion,
     'nombre'    => $nombre,
@@ -44,28 +40,19 @@ $camposFaltantes = array_filter([
 ], fn($v) => $v === '');
 
 if (!empty($camposFaltantes)) {
-    $msg = '⚠️ Todos los campos son obligatorios.';
-    isAjaxRequest()
-        ? exit(json_encode(['success' => false, 'message' => $msg]))
-        : exit("<script>alert('$msg'); window.location.href='devices.php';</script>");
+    jsonResponse(false, '⚠️ Todos los campos son obligatorios.');
 }
 
-// ✅ Validar serial (EGXXXXXX)
+// ✅ Validar formato de serial (EGXXXXXX)
 if (!preg_match('/^EG[A-Z0-9]{6}$/', $serial)) {
-    $msg = '❗ El número de serie debe tener formato: EGXXXXXX (6 caracteres alfanuméricos).';
-    isAjaxRequest()
-        ? exit(json_encode(['success' => false, 'message' => $msg]))
-        : exit("<script>alert('$msg'); window.location.href='devices.php';</script>");
+    jsonResponse(false, '❗ El número de serie debe tener formato: EGXXXXXX (6 caracteres alfanuméricos).');
 }
 
 // 🚫 Verificar duplicados
 $stmt = $pdo->prepare("SELECT id FROM devices WHERE serial_number = ? AND user_id = ?");
 $stmt->execute([$serial, $userId]);
 if ($stmt->fetch()) {
-    $msg = '❌ Este número de serie ya está registrado.';
-    isAjaxRequest()
-        ? exit(json_encode(['success' => false, 'message' => $msg]))
-        : exit("<script>alert('$msg'); window.location.href='devices.php';</script>");
+    jsonResponse(false, '❌ Este número de serie ya está registrado.');
 }
 
 // 📝 Insertar dispositivo
@@ -95,15 +82,9 @@ try {
         $userId
     ]);
 
-    $msg = '✅ Dispositivo registrado con éxito.';
-    isAjaxRequest()
-        ? exit(json_encode(['success' => true, 'message' => $msg]))
-        : exit("<script>alert('$msg'); window.location.href='devices.php';</script>");
+    jsonResponse(true, '✅ Dispositivo registrado con éxito.');
 
 } catch (PDOException $e) {
-    error_log("❌ DB Error: " . $e->getMessage());
-    $msg = '❌ Error al registrar el dispositivo. Inténtalo nuevamente.';
-    isAjaxRequest()
-        ? exit(json_encode(['success' => false, 'message' => $msg]))
-        : exit("<script>alert('$msg'); window.location.href='devices.php';</script>");
+    error_log("❌ DB Error [devices_add.php]: " . $e->getMessage());
+    jsonResponse(false, '❌ Error al registrar el dispositivo. Inténtalo nuevamente.');
 }
