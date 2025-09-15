@@ -127,7 +127,7 @@ $lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
         cancelButtonText: 'Cancelar'
       }).then((result) => {
         if (result.isConfirmed) {
-          fetch(`<?= BASE_PATH ?>/devices_delete.php`, {
+          fetch(`<?= BASE_PATH ?>/devices_delete`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: `id=${id}`
@@ -171,7 +171,7 @@ $lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
     }
 
     function editDevice(id) {
-      window.location.href = `<?= BASE_PATH ?>/devices_edit.php?id=${id}`;
+      window.location.href = `<?= BASE_PATH ?>/devices_edit?id=${id}`;
     }
   </script>
 <?php require __DIR__ . '/footer.php'; ?>
