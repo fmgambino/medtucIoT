@@ -73,7 +73,7 @@ form.addEventListener("submit", async (e) => {
   if (editMode) formData.append("id", editId);
 
   try {
-    const res = await fetch(editMode ? "devices_edit.php" : "devices_add.php", {
+    const res = await fetch(editMode ? "devices_edit" : "devices_add.php", {
       method: "POST",
       headers: { "X-Requested-With": "XMLHttpRequest" },
       body: formData

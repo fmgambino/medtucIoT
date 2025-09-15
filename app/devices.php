@@ -59,7 +59,7 @@ $lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
     <div class="modal-content">
       <span class="close" onclick="closeModal()">×</span>
       <h2>Añadir Dispositivo</h2>
-      <form id="deviceForm" method="POST" action="<?= BASE_PATH ?>/devices_add.php">
+      <form id="deviceForm" method="POST" action="<?= BASE_PATH ?>/devices_add">
         <label>Ubicación:</label>
         <input type="text" name="ubicacion" required />
         <label>Nombre:</label>
