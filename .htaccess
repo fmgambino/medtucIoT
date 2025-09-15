@@ -6,38 +6,22 @@
 # 1) Activar mod_rewrite
 RewriteEngine On
 
-# 2) Reescritura básica para rutas amigables (si no existe el archivo/directorio)
+# 2) Reescritura básica para rutas amigables (si no existe archivo/directorio físico)
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
-RewriteRule ^([a-zA-Z0-9_-]+)$ app/$1.php [L]
+RewriteRule ^([a-zA-Z0-9_-]+)/?$ app/$1.php [L,QSA]
 
 # 3) Redirigir raíz del dominio a login
 RewriteRule ^$ login [L,R=302]
 
-# 4) Rutas amigables personalizadas → apuntan a scripts en /app/
-RewriteRule ^login/?$              app/login.php              [L,QSA]
-RewriteRule ^register/?$           app/register.php           [L,QSA]
-RewriteRule ^dashboard/?$          app/dashboard.php          [L,QSA]
-RewriteRule ^devices/?$            app/devices.php            [L,QSA]
-RewriteRule ^devices_add/?$        app/devices_add.php        [L,QSA]
-RewriteRule ^devices_edit/?$       app/devices_edit.php       [L,QSA]
-RewriteRule ^devices_delete/?$     app/devices_delete.php     [L,QSA]
-RewriteRule ^sensor/?$             app/sensor.php             [L,QSA]
-RewriteRule ^get_latest/?$         app/get_latest.php         [L,QSA]
-RewriteRule ^get_history/?$        app/get_history.php        [L,QSA]
-RewriteRule ^get_devices/?$        app/get_devices.php        [L,QSA]
-RewriteRule ^get_device_status/?$  app/get_device_status.php  [L,QSA]
-RewriteRule ^logout/?$             app/logout.php             [L,QSA]
-RewriteRule ^recuperar_acceso/?$   app/recuperar_acceso.php   [L,QSA]
-
-# 5) Excepciones: permitir acceso directo a APIs necesarias
+# 4) Excepciones: permitir acceso directo a APIs necesarias
 RewriteCond %{THE_REQUEST} \s/app/(sensor|get_latest|get_history|get_device_status|logout|imgPerfil|get_devices|devices_add|devices_edit|devices_delete|recuperar_acceso)\.php [NC]
 RewriteRule ^ - [L]
 
-# 6) Bloquear acceso directo a otros /app/*.php
+# 5) Bloquear acceso directo a otros /app/*.php
 RewriteCond %{THE_REQUEST} \s/app/.*\.php [NC]
 RewriteCond %{THE_REQUEST} !\s/app/(sensor|get_latest|get_history|get_device_status|logout|imgPerfil|get_devices|devices_add|devices_edit|devices_delete|recuperar_acceso)\.php [NC]
 RewriteRule ^app/.*\.php$ - [F]
 
-# 7) Seguridad adicional (opcional)
+# 6) Seguridad adicional
 Options -Indexes

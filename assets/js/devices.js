@@ -41,7 +41,9 @@ function openModal(edit = false, data = null) {
     for (let key in data) {
       if (form[key]) form[key].value = data[key];
     }
-    mapPreview.innerHTML = `<iframe src="${data.mapa}" loading="lazy" allowfullscreen></iframe>`;
+    if (data.mapa) {
+      mapPreview.innerHTML = `<iframe src="${data.mapa}" loading="lazy" allowfullscreen></iframe>`;
+    }
   } else {
     form.espid.value = "ESP" + Math.floor(Math.random() * 100000);
   }
@@ -63,6 +65,9 @@ form.domicilio.addEventListener("input", () => {
     const url = `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
     form.mapa.value = url;
     mapPreview.innerHTML = `<iframe src="${url}" loading="lazy" allowfullscreen></iframe>`;
+  } else {
+    form.mapa.value = "";
+    mapPreview.innerHTML = "";
   }
 });
 
@@ -96,7 +101,7 @@ form.addEventListener("submit", async (e) => {
     const result = await res.json();
     if (result.success) {
       Swal.fire("✅ Éxito", result.message, "success").then(() => {
-        location.reload(); // Recargar la página para reflejar cambios
+        location.reload(); // 🔄 Recargar siempre tras guardar
       });
     } else {
       Swal.fire("❌ Error", result.message, "error");
@@ -191,26 +196,29 @@ async function deleteDevice(id) {
     cancelButtonText: "Cancelar"
   });
 
-  if (confirm.isConfirmed) {
-    try {
-      const res = await fetch("devices_delete.php", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-          "X-Requested-With": "XMLHttpRequest"
-        },
-        body: `id=${id}`
-      });
+  if (!confirm.isConfirmed) return;
 
-      const result = await res.json();
-      if (result.success) {
-        Swal.fire("Eliminado", result.message, "success").then(fetchDevices);
-      } else {
-        Swal.fire("Error", result.message, "error");
-      }
-    } catch (err) {
-      console.error(err);
-      Swal.fire("Error", "No se pudo eliminar el dispositivo.", "error");
+  try {
+    const res = await fetch("devices_delete", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      body: `id=${id}`
+    });
+
+    const result = await res.json();
+
+    if (result.success) {
+      Swal.fire("Eliminado", result.message, "success").then(() => {
+        location.reload(); // 🔄 Recarga para reflejar eliminación
+      });
+    } else {
+      Swal.fire("Error", result.message, "error");
     }
+  } catch (err) {
+    console.error(err);
+    Swal.fire("Error", "No se pudo eliminar el dispositivo.", "error");
   }
 }
