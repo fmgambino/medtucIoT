@@ -121,34 +121,40 @@ $lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
   <script>
     feather.replace();
 
-    /** ---------------------------
-     *  THEMED SWEETALERT HELPERS
-     *  Respeta el tema de main.js (body.dark)
-     *  --------------------------- */
+    /* =========================================================
+     *  THEMED SWEETALERT HELPERS (respeta main.js -> body.dark)
+     * ========================================================= */
+    (function () {
+      function isDarkMode() {
+        // main.js aplica 'dark' en <body> al activar tema oscuro
+        return document.body.classList.contains('dark');
+      }
 
-    const isDarkMode = () => document.body.classList.contains('dark');
+      function swalThemeOptions() {
+        const dark = isDarkMode();
+        return {
+          background: dark ? '#1f1f1f' : '#fff',
+          color:       dark ? '#fff'    : '#111',
+          iconColor:   dark ? '#00c853' : undefined,
+          confirmButtonColor: dark ? '#00c853' : '#3085d6',
+          cancelButtonColor:  dark ? '#616161' : '#aaa',
+          // Opcional: clases para tunear si tienes CSS propio
+          customClass: {
+            popup: dark ? 'swal2-dark' : ''
+          }
+        };
+      }
 
-    function swalThemeOptions() {
-      const dark = isDarkMode();
-      return {
-        background: dark ? '#1f1f1f' : '#fff',
-        color:       dark ? '#fff'    : '#111',
-        iconColor:   dark ? '#00c853' : undefined,
-        confirmButtonColor: dark ? '#00c853' : '#3085d6',
-        cancelButtonColor:  dark ? '#616161' : '#aaa',
+      // Exponer global para reuso desde devices.js si lo necesitas
+      window.fireThemed = function (options) {
+        const base = swalThemeOptions();
+        return Swal.fire(Object.assign({}, base, options));
       };
-    }
+    })();
 
-    // Wrapper que aplica el tema cada vez que se abre un popup
-    function fireThemed(options) {
-      const base = swalThemeOptions();
-      return Swal.fire(Object.assign({}, base, options));
-    }
-
-    /** ---------------------------
-     *  Acciones
-     *  --------------------------- */
-
+    /* =====================
+     *  Acciones con popups
+     * ===================== */
     function deleteDevice(id) {
       fireThemed({
         title: 'Eliminar dispositivo',
