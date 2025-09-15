@@ -14,7 +14,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 // Cambiar tema
-toggle.addEventListener("change", () => {
+toggle?.addEventListener("change", () => {
   const isDark = toggle.checked;
   document.body.classList.toggle("dark-mode", isDark);
   document.body.classList.toggle("light-mode", !isDark);
@@ -25,7 +25,7 @@ toggle.addEventListener("change", () => {
 function loadTheme() {
   const theme = localStorage.getItem("theme") || "light";
   document.body.classList.add(`${theme}-mode`);
-  toggle.checked = theme === "dark";
+  if (toggle) toggle.checked = theme === "dark";
 }
 
 // Abrir modal
@@ -38,9 +38,16 @@ function openModal(edit = false, data = null) {
 
   if (edit && data) {
     editId = data.id;
-    for (let key in data) {
-      if (form[key]) form[key].value = data[key];
-    }
+
+    // Precargar campos según las claves del objeto
+    form.nombre.value = data.nombre || "";
+    form.serial.value = data.serial_number || "";
+    form.espid.value = data.esp32_id || "";
+    form.ubicacion.value = data.ubicacion || "";
+    form.domicilio.value = data.domicilio || "";
+    form.mapa.value = data.mapa || "";
+    form.icono.value = data.icono || "";
+
     if (data.mapa) {
       mapPreview.innerHTML = `<iframe src="${data.mapa}" loading="lazy" allowfullscreen></iframe>`;
     }
@@ -140,7 +147,7 @@ function addDeviceToGrid(device) {
   card.className = "card";
 
   card.innerHTML = `
-    <div class="card-header">${device.icono} ${device.name}</div>
+    <div class="card-header">${device.icono} ${device.nombre}</div>
     <div><strong>ID:</strong> ${device.esp32_id}</div>
     <div><strong>Serie:</strong> ${device.serial_number}</div>
     <div class="map-container">
@@ -162,7 +169,7 @@ function showInfo(device) {
   const isDark = document.body.classList.contains("dark-mode");
 
   Swal.fire({
-    title: `Estado de ${device.name}`,
+    title: `Estado de ${device.nombre}`,
     icon: "info",
     background: isDark ? "#1f1f1f" : "#fff",
     color: isDark ? "#fff" : "#111",
@@ -200,19 +207,19 @@ async function deleteDevice(id) {
 
   try {
     const res = await fetch("devices_delete", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/x-www-form-urlencoded",
-    "X-Requested-With": "XMLHttpRequest"
-  },
-  body: `id=${id}`
-});
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+        "X-Requested-With": "XMLHttpRequest"
+      },
+      body: `id=${id}`
+    });
 
     const result = await res.json();
 
     if (result.success) {
       Swal.fire("Eliminado", result.message, "success").then(() => {
-        location.reload(); // 🔄 Recarga para reflejar eliminación
+        location.reload(); // 🔄 Recarga tras eliminación
       });
     } else {
       Swal.fire("Error", result.message, "error");

@@ -46,9 +46,15 @@ $lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
             <iframe src="<?= htmlspecialchars($d['mapa']) ?>" loading="lazy" allowfullscreen></iframe>
           </div>
           <div class="card-footer">
-            <button onclick='showInfo(<?= json_encode($d, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'><i data-feather="info"></i></button>
-            <button onclick='editDevice(<?= json_encode($d, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'><i data-feather="edit"></i></button>
-            <button onclick='deleteDevice(<?= $d['id'] ?>)'><i data-feather="trash-2"></i></button>
+            <button onclick='showInfo(<?= json_encode($d, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'>
+              <i data-feather="info"></i>
+            </button>
+            <button onclick='editDevice(<?= json_encode($d, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>)'>
+              <i data-feather="edit"></i>
+            </button>
+            <button onclick='deleteDevice(<?= $d['id'] ?>)'>
+              <i data-feather="trash-2"></i>
+            </button>
           </div>
         </div>
       <?php endforeach; ?>
@@ -58,16 +64,20 @@ $lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
   <div class="modal hidden" id="deviceModal">
     <div class="modal-content">
       <span class="close" onclick="closeModal()">×</span>
-      <h2>Añadir Dispositivo</h2>
+      <h2 id="modalTitle">Añadir Dispositivo</h2>
       <form id="deviceForm" method="POST" action="<?= BASE_PATH ?>/devices_add">
         <label>Ubicación:</label>
         <input type="text" name="ubicacion" required />
+
         <label>Nombre:</label>
         <input type="text" name="nombre" required />
+
         <label>ID (ESPXXXX):</label>
-        <input type="text" name="espid" value="ESP<?= rand(10000,99999) ?>" readonly />
+        <input type="text" name="espid" readonly />
+
         <label>Número de Serie (EG+6 MAC):</label>
         <input type="text" name="serial" required />
+
         <label>Icono:</label>
         <select name="icono" required>
           <option value="🏠 Casa">🏠 Casa</option>
@@ -78,10 +88,13 @@ $lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
           <option value="📶 Antena">📶 Antena</option>
           <option value="🔧 Genérico">🔧 Genérico</option>
         </select>
+
         <label>Domicilio:</label>
         <input type="text" name="domicilio" id="domicilio" required />
+
         <input type="hidden" name="mapa" id="mapa" />
         <div class="map-container" id="mapPreview" style="margin-top:1rem;"></div>
+
         <button type="submit" class="btn-green">Guardar</button>
       </form>
     </div>
@@ -90,32 +103,9 @@ $lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
   <div class="footer">© 2025 MedTuCloT – Electrónica Gambino</div>
 
   <script src="<?= BASE_PATH ?>/assets/js/main.js"></script>
+  <script src="<?= BASE_PATH ?>/assets/js/devices.js"></script>
   <script>
     feather.replace();
-
-    const input = document.getElementById('domicilio');
-    const mapField = document.getElementById('mapa');
-    const mapPreview = document.getElementById('mapPreview');
-
-    input?.addEventListener('input', () => {
-      const value = input.value.trim();
-      if (value.length > 5) {
-        const mapUrl = `https://www.google.com/maps?q=${encodeURIComponent(value)}&output=embed`;
-        mapField.value = mapUrl;
-        mapPreview.innerHTML = `<iframe src="${mapUrl}" loading="lazy" allowfullscreen></iframe>`;
-      } else {
-        mapField.value = '';
-        mapPreview.innerHTML = '';
-      }
-    });
-
-    function openModal() {
-      document.getElementById("deviceModal").classList.remove("hidden");
-    }
-
-    function closeModal() {
-      document.getElementById("deviceModal").classList.add("hidden");
-    }
 
     function deleteDevice(id) {
       Swal.fire({
@@ -171,9 +161,9 @@ $lastEspId = $lastDevice['esp32_id'] ?? 'N/A';
     }
 
     function editDevice(device) {
-  openModal(true, device);
-}
-
+      openModal(true, device);
+      document.getElementById("modalTitle").textContent = "Editar Dispositivo";
+    }
   </script>
 <?php require __DIR__ . '/footer.php'; ?>
 </body>
