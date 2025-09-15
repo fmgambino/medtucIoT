@@ -13,8 +13,12 @@ let editId   = null;
 // ----------------------
 
 // Usa la misma API de main.js
+
+// --- Sincronizar tema con main.js ---
 function applyTheme(dark) {
   document.body.classList.toggle("dark", dark);
+  document.body.classList.toggle("light", !dark);
+  localStorage.setItem("theme", dark ? "dark" : "light");
 }
 
 function loadTheme() {
@@ -22,10 +26,19 @@ function loadTheme() {
   applyTheme(dark);
 }
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   loadTheme();
-  await fetchDevices();
+
+  // Si tienes un toggle dentro de devices.php
+  const toggle = document.getElementById("modeToggle");
+  if (toggle) {
+    toggle.checked = localStorage.getItem("theme") === "dark";
+    toggle.addEventListener("change", () => {
+      applyTheme(toggle.checked);
+    });
+  }
 });
+
 
 // ----------------------
 // MODAL HANDLING
