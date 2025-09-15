@@ -200,13 +200,13 @@ async function deleteDevice(id) {
 
   try {
     const res = await fetch("devices_delete", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        "X-Requested-With": "XMLHttpRequest"
-      },
-      body: `id=${id}`
-    });
+  method: "POST",
+  headers: {
+    "Content-Type": "application/x-www-form-urlencoded",
+    "X-Requested-With": "XMLHttpRequest"
+  },
+  body: `id=${id}`
+});
 
     const result = await res.json();
 
