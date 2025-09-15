@@ -1,59 +1,102 @@
 <?php
+// /medtuciot/app/devices_edit.php
+
 require __DIR__ . '/config.php';
 session_start();
-
 header('Content-Type: application/json');
 
-// Validar sesión y método
-if (!isset($_SESSION['user_id']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['success' => false, 'message' => '🔒 No autorizado.']);
+/**
+ * Enviar respuesta JSON y finalizar
+ */
+function jsonResponse(bool $success, string $message, array $extra = []): void {
+    echo json_encode(array_merge(['success' => $success, 'message' => $message], $extra));
     exit;
 }
 
-$userId = $_SESSION['user_id'];
-
-// Leer JSON del cuerpo del request
-$data = json_decode(file_get_contents('php://input'), true);
-
-$id        = intval($data['id'] ?? 0);
-$ubicacion = trim($data['ubicacion'] ?? '');
-$nombre    = trim($data['nombre'] ?? '');
-$espid     = trim($data['espid'] ?? '');
-$serial    = strtoupper(trim($data['serial'] ?? ''));
-$icono     = trim($data['icono'] ?? '');
-$domicilio = trim($data['domicilio'] ?? '');
-$mapa      = trim($data['mapa'] ?? '');
-
-// Validar campos obligatorios
-if (!$id || $ubicacion === '' || $nombre === '' || $espid === '' || $serial === '' || $icono === '' || $domicilio === '' || $mapa === '') {
-    echo json_encode(['success' => false, 'message' => '⚠️ Todos los campos son obligatorios.']);
-    exit;
+// 🔐 Validar sesión y método
+if (empty($_SESSION['user_id']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+    jsonResponse(false, '🔒 No autorizado.');
 }
 
-// Validar formato del número de serie
+$userId = (int) $_SESSION['user_id'];
+
+// 📥 Obtener datos (funciona con JSON y con form-urlencoded / FormData)
+$rawInput = file_get_contents('php://input');
+$data = json_decode($rawInput, true);
+
+if (is_array($data) && isset($data['id'])) {
+    // Si viene en JSON
+    $id        = (int) ($data['id'] ?? 0);
+    $ubicacion = trim($data['ubicacion'] ?? '');
+    $nombre    = trim($data['nombre'] ?? '');
+    $espid     = trim($data['espid'] ?? '');
+    $serial    = strtoupper(trim($data['serial'] ?? ''));
+    $icono     = trim($data['icono'] ?? '');
+    $domicilio = trim($data['domicilio'] ?? '');
+    $mapa      = trim($data['mapa'] ?? '');
+} else {
+    // Si viene en FormData (más común con fetch + FormData)
+    $id        = (int) ($_POST['id'] ?? 0);
+    $ubicacion = trim($_POST['ubicacion'] ?? '');
+    $nombre    = trim($_POST['nombre'] ?? '');
+    $espid     = trim($_POST['espid'] ?? '');
+    $serial    = strtoupper(trim($_POST['serial'] ?? ''));
+    $icono     = trim($_POST['icono'] ?? '');
+    $domicilio = trim($_POST['domicilio'] ?? '');
+    $mapa      = trim($_POST['mapa'] ?? '');
+}
+
+// ✅ Validar campos obligatorios
+if (
+    $id <= 0 ||
+    $ubicacion === '' ||
+    $nombre === '' ||
+    $espid === '' ||
+    $serial === '' ||
+    $icono === '' ||
+    $domicilio === '' ||
+    $mapa === ''
+) {
+    jsonResponse(false, '⚠️ Todos los campos son obligatorios.');
+}
+
+// ✅ Validar formato de serial
 if (!preg_match('/^EG[A-Z0-9]{6}$/', $serial)) {
-    echo json_encode(['success' => false, 'message' => '❗ Formato de número de serie inválido.']);
-    exit;
+    jsonResponse(false, '❗ El número de serie debe tener formato: EGXXXXXX.');
 }
 
-// Verificar unicidad del número de serie
-$stmt = $pdo->prepare("SELECT id FROM devices WHERE serial = ? AND id != ? AND user_id = ?");
+// 🚫 Verificar duplicados (excepto el propio dispositivo)
+$stmt = $pdo->prepare("SELECT id FROM devices WHERE serial_number = ? AND id != ? AND user_id = ?");
 $stmt->execute([$serial, $id, $userId]);
 if ($stmt->fetch()) {
-    echo json_encode(['success' => false, 'message' => '❌ Este número de serie ya está registrado.']);
-    exit;
+    jsonResponse(false, '❌ Otro dispositivo ya tiene este número de serie.');
 }
 
-// Ejecutar actualización
+// 📝 Ejecutar actualización
 try {
     $update = $pdo->prepare("
         UPDATE devices
-        SET ubicacion = ?, nombre = ?, espid = ?, serial = ?, icono = ?, domicilio = ?, mapa = ?
+        SET serial_number = ?, name = ?, icono = ?, ubicacion = ?, domicilio = ?, mapa = ?, esp32_id = ?
         WHERE id = ? AND user_id = ?
     ");
-    $update->execute([$ubicacion, $nombre, $espid, $serial, $icono, $domicilio, $mapa, $id, $userId]);
+    $update->execute([
+        $serial,
+        $nombre,
+        $icono,
+        $ubicacion,
+        $domicilio,
+        $mapa,
+        $espid,
+        $id,
+        $userId
+    ]);
 
-    echo json_encode(['success' => true, 'message' => '✅ Dispositivo actualizado correctamente.']);
+    if ($update->rowCount() > 0) {
+        jsonResponse(true, '✅ Dispositivo actualizado correctamente.');
+    } else {
+        jsonResponse(false, '⚠️ No se realizaron cambios (verifica permisos o datos).');
+    }
 } catch (PDOException $e) {
-    echo json_encode(['success' => false, 'message' => '❌ Error al actualizar el dispositivo.']);
+    error_log("❌ DB Error [devices_edit.php]: " . $e->getMessage());
+    jsonResponse(false, '❌ Error al actualizar el dispositivo.');
 }

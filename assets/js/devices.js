@@ -72,17 +72,31 @@ form.addEventListener("submit", async (e) => {
   const formData = new FormData(form);
   if (editMode) formData.append("id", editId);
 
+  // Confirmación con SweetAlert2
+  const confirm = await Swal.fire({
+    title: editMode ? "¿Guardar cambios?" : "¿Agregar este dispositivo?",
+    text: editMode
+      ? "Se actualizará la información del dispositivo."
+      : "Se registrará en tu cuenta.",
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: editMode ? "Sí, guardar" : "Sí, agregar",
+    cancelButtonText: "Cancelar"
+  });
+
+  if (!confirm.isConfirmed) return;
+
   try {
-    const res = await fetch(editMode ? "devices_edit" : "devices_add.php", {
+    const res = await fetch(editMode ? "devices_edit" : "devices_add", {
       method: "POST",
       headers: { "X-Requested-With": "XMLHttpRequest" },
       body: formData
     });
+
     const result = await res.json();
     if (result.success) {
       Swal.fire("✅ Éxito", result.message, "success").then(() => {
-        fetchDevices();
-        closeModal();
+        location.reload(); // Recargar la página para reflejar cambios
       });
     } else {
       Swal.fire("❌ Error", result.message, "error");

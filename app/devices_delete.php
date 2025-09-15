@@ -1,34 +1,51 @@
 <?php
+// /medtuciot/app/devices_delete.php
+
 require __DIR__ . '/config.php';
 session_start();
 header('Content-Type: application/json');
 
-// Verifica sesión y método
-if (!isset($_SESSION['user_id']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
-    echo json_encode(['success' => false, 'message' => '🔒 No autorizado.']);
+/**
+ * Enviar respuesta JSON y finalizar
+ */
+function jsonResponse(bool $success, string $message, array $extra = []): void {
+    echo json_encode(array_merge(['success' => $success, 'message' => $message], $extra));
     exit;
 }
 
-$userId = (int)$_SESSION['user_id'];
-$data = json_decode(file_get_contents('php://input'), true);
-$id = (int)($data['id'] ?? 0);
+// 🔐 Validar sesión y método
+if (empty($_SESSION['user_id']) || $_SERVER['REQUEST_METHOD'] !== 'POST') {
+    jsonResponse(false, '🔒 No autorizado.');
+}
 
-// Validación
+$userId = (int) $_SESSION['user_id'];
+
+// 📥 Obtener datos (funciona con JSON y con form-urlencoded)
+$rawInput = file_get_contents('php://input');
+$data = json_decode($rawInput, true);
+
+if (is_array($data) && isset($data['id'])) {
+    $id = (int) $data['id'];
+} else {
+    $id = (int) ($_POST['id'] ?? 0);
+}
+
+// ✅ Validar ID
 if ($id <= 0) {
-    echo json_encode(['success' => false, 'message' => '❌ ID inválido.']);
-    exit;
+    jsonResponse(false, '❌ ID inválido.');
 }
 
+// 🗑 Intentar eliminar
 try {
     $stmt = $pdo->prepare("DELETE FROM devices WHERE id = ? AND user_id = ?");
     $stmt->execute([$id, $userId]);
 
     if ($stmt->rowCount() > 0) {
-        echo json_encode(['success' => true, 'message' => '🗑 Dispositivo eliminado correctamente.']);
+        jsonResponse(true, '🗑 Dispositivo eliminado correctamente.');
     } else {
-        echo json_encode(['success' => false, 'message' => '❌ No se encontró el dispositivo.']);
+        jsonResponse(false, '❌ No se encontró el dispositivo o no tienes permisos.');
     }
 } catch (PDOException $e) {
-    error_log("Delete Error: " . $e->getMessage());
-    echo json_encode(['success' => false, 'message' => '❌ Error al eliminar el dispositivo.']);
+    error_log("❌ DB Error [devices_delete.php]: " . $e->getMessage());
+    jsonResponse(false, '❌ Error al eliminar el dispositivo.');
 }
